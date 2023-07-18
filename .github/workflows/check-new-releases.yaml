@@ -39,6 +39,13 @@ jobs:
         run: python3 launchpad_downloader.py --repository-url ~paolosottovia/test-spark-build/+git/test-spark-build --branch-prefix spark- --credential-file credentials.txt --output-folder output
       - name: Check downloaded builds
         run: ls output
+      - name: Zip builds
+        run: zip -r output.zip output
+      - name: Store builds
+        uses: actions/upload-artifact@v2
+          with:
+            name: releases
+            path: output.zip
       - name: Generate matrix with all built versions
         id: set-matrix
         run: |
@@ -55,6 +62,12 @@ jobs:
     steps:
       - name: Print release version
         run: echo ${{ matrix.version }}
+      - name: Download releases
+        uses: actions/download-artifact@v2
+          with:
+            name: releases
+      - name: Unzip releases
+        run: unzip output.zip
       - name: Test output
         run: ls output/
       
