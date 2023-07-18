@@ -43,9 +43,9 @@ jobs:
         run: zip -r output.zip output
       - name: Store builds
         uses: actions/upload-artifact@v2
-          with:
-            name: releases
-            path: output.zip
+        with:
+          name: releases
+          path: output.zip
       - name: Generate matrix with all built versions
         id: set-matrix
         run: |
@@ -64,8 +64,8 @@ jobs:
         run: echo ${{ matrix.version }}
       - name: Download releases
         uses: actions/download-artifact@v2
-          with:
-            name: releases
+        with:
+          name: releases
       - name: Unzip releases
         run: unzip output.zip
       - name: Test output
