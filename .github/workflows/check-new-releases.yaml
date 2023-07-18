@@ -46,12 +46,12 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
   checklinks:
-  needs: download-builds
-  runs-on: ubuntu-latest
-  strategy:
-    fail-fast: false
-    matrix:
-      version: ${{ fromJson(needs.download-builds.outputs.matrix) }}
-  steps:
-    - name: Make release
-      run: echo ${{ matrix.version }}
+    needs: download-builds
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{ fromJson(needs.download-builds.outputs.matrix) }}
+    steps:
+      - name: Make release
+        run: echo ${{ matrix.version }}
