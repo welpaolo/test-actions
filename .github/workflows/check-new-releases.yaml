@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: Create credentials file
         env:
           CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}
@@ -29,8 +31,6 @@ jobs:
           echo "access_token = $ACCESS_TOKEN" >> credentials.txt
           echo "access_secret = $ACCESS_SECRET" >> credentials.txt
           cat credentials.txt
-      - name: Checkout
-        uses: actions/checkout@v3
       - name: Install python dependencies
         run: pip install -r requirements.txt
       - name: Create temp folder where build are downloaded
