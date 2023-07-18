@@ -28,7 +28,7 @@ jobs:
           echo "consumer_secret = " >> credentials.txt
           echo "access_token = $ACCESS_TOKEN" >> credentials.txt
           echo "access_secret = $ACCESS_SECRET" >> credentials.txt
-
+          cat credentials.txt
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install python dependencies
