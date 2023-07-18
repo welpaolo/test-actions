@@ -31,14 +31,10 @@ jobs:
           echo "access_token = $ACCESS_TOKEN" >> credentials.txt
           echo "access_secret = $ACCESS_SECRET" >> credentials.txt
           cat credentials.txt
-      - name: Install python dependencies
-        run: pip install -r requirements.txt
-      - name: Create temp folder where build are downloaded
-        run: mkdir output; cat credentials.txt
-      - name: Download latest built version
-        run: python3 launchpad_downloader.py --repository-url ~paolosottovia/test-spark-build/+git/test-spark-build --branch-prefix spark- --credential-file credentials.txt --output-folder output
-      - name: Run output folders
-        run: ls output
+          pip install -r requirements.txt
+          mkdir output; cat credentials.txt
+          python3 launchpad_downloader.py --repository-url ~paolosottovia/test-spark-build/+git/test-spark-build --branch-prefix spark- --credential-file credentials.txt --output-folder output
+          ls output
       - name: Generate matrix with all modules of WhatTheHack repository
         id: set-matrix
         run: |
