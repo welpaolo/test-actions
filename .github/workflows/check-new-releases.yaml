@@ -70,4 +70,37 @@ jobs:
         run: unzip output.zip
       - name: Test output
         run: ls output/
+      - name: package update
+        run: |
+          cd output/${{ matrix.version }}
+          
+      - name: Release the package
+        id: create-new-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ matrix.version }}
+          release_name: Release ${{ matrix.version }}
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-new-release.outputs.upload_url }}
+          asset_path: output/${{ matrix.version }}/${{ matrix.version }}-bin-custom-spark.tgz
+          asset_name: ${{ matrix.version }}.tgz
+          asset_content_type: application/zip
+      - name: Upload checksum
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-new-release.outputs.upload_url }}
+          asset_path: output/${{ matrix.version }}/${{ matrix.version }}-bin-custom-spark.tgz.sha512
+          asset_name: ${{ matrix.version }}.sha512
+          asset_content_type: application/txt
       
+        
+
+  
