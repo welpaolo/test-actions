@@ -45,7 +45,7 @@ jobs:
           echo "::set-output name=matrix::$(ls -l output/ | awk -F ' ' '{print $9}' |  jq -R -s -c 'split("\n") | map(select(length > 0))')"
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-  checklinks:
+  release-artifact:
     needs: download-builds
     runs-on: ubuntu-latest
     strategy:
@@ -53,5 +53,8 @@ jobs:
       matrix:
         version: ${{ fromJson(needs.download-builds.outputs.matrix) }}
     steps:
-      - name: Make release
+      - name: Print release version
         run: echo ${{ matrix.version }}
+      - name: Test output
+        run: ls output/
+      
