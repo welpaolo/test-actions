@@ -31,14 +31,18 @@ jobs:
           echo "access_token = $ACCESS_TOKEN" >> credentials.txt
           echo "access_secret = $ACCESS_SECRET" >> credentials.txt
           cat credentials.txt
-          pip install -r requirements.txt
-          mkdir output; cat credentials.txt
-          python3 launchpad_downloader.py --repository-url ~paolosottovia/test-spark-build/+git/test-spark-build --branch-prefix spark- --credential-file credentials.txt --output-folder output
-          ls output
-      - name: Generate matrix with all modules of WhatTheHack repository
+      -name: Install python dependencies
+        run: pip install -r requirements.txt
+      - name: Create folder for storing the builds
+        run: mkdir output; cat credentials.txt
+      - name: Run download script
+        run: python3 launchpad_downloader.py --repository-url ~paolosottovia/test-spark-build/+git/test-spark-build --branch-prefix spark- --credential-file credentials.txt --output-folder output
+      - name: Check downloaded builds
+        run: ls output
+      - name: Generate matrix with all built versions
         id: set-matrix
         run: |
-          echo "::set-output name=matrix::$(ls -l | awk -F ' ' '{print $9}' |  jq -R -s -c 'split("\n") | map(select(length > 0))')"
+          echo "::set-output name=matrix::$(ls -l output/ | awk -F ' ' '{print $9}' |  jq -R -s -c 'split("\n") | map(select(length > 0))')"
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
   checklinks:
