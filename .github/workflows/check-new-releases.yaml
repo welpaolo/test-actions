@@ -34,7 +34,7 @@ jobs:
       - name: Install python dependencies
         run: pip install -r requirements.txt
       - name: Create temp folder where build are downloaded
-        run: mkdir output
+        run: mkdir output; cat credentials.txt
       - name: Download latest built version
         run: python3 launchpad_downloader.py --repository-url ~paolosottovia/test-spark-build/+git/test-spark-build --branch-prefix spark- --credential-file credentials.txt --output-folder output
       - name: Run output folders
