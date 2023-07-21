@@ -22,6 +22,7 @@ on:
 
 env:
   LP_CREDENTIALS: credentials.txt
+  OUTPUT_DIR: output/
 
 jobs:
   download-builds:
@@ -52,32 +53,29 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Create folder for storing the builds
-        run: mkdir output; cat "${{ env.LP_CREDENTIALS }}"
+        run: mkdir "${{ env.OUTPUT_DIR }}"; cat "${{ env.LP_CREDENTIALS }}"
 
       - name: Run download script
         run: |
           python3 launchpad_downloader.py \
-            --repository-url ${{ inputs.lp-repo }} \
-            --branch-prefix ${{ inputs.lp-branch-prefix }} \
-            --credential-file ${{ env.LP_CREDENTIALS }} \
-            --output-folder output
+            --repository-url "${{ inputs.lp-repo }}" \
+            --branch-prefix "${{ inputs.lp-branch-prefix }}" \
+            --credential-file "${{ env.LP_CREDENTIALS }}" \
+            --output-folder "${{ env.OUTPUT_DIR }}"
 
       - name: Check downloaded builds
-        run: ls output
-
-      - name: Zip builds
-        run: zip -r output.zip output
+        run: ls ${{ env.OUTPUT_DIR }}
 
       - name: Store builds
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: releases
-          path: output.zip
+          path: ${{ env.OUTPUT_DIR }}
 
       - name: Generate matrix with all built versions
         id: set-matrix
         run: |
-          echo "::set-output name=matrix::$(ls -A1 output/ | jq -R -s -c 'split("\n")[:-1]')"
+          echo "::set-output name=matrix::$(ls -A1 ${{ env.OUTPUT_DIR }} | jq -R -s -c 'split("\n")[:-1]')"
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
 
@@ -93,29 +91,28 @@ jobs:
         run: echo ${{ matrix.version }}
 
       - name: Download releases
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: releases
 
-      - name: Unzip releases
-        run: unzip output.zip
-
       - name: Test output
-        run: ls output/
+        run: ls "${{ env.OUTPUT_DIR }}"
 
       - name: package update
         run: |
-          cd output/${{ matrix.version }}
+          cd "${{ env.OUTPUT_DIR }}/${{ matrix.version }}"
 
       - name: LP release
         id: create-new-lp-release
         run: |
+          tarball=$(find ./ -maxdepth 1 -mindepth 1 -name "${inputs.name}-${{ matrix.version }}-*.tar.gz")
+          
           python3 launchpad_release.py \
-            --app ${{ inputs.name }} \
-            --project ${{ inputs.lp-project }} \
-            --version ${{ matrix.version }} \
-            --tarball resources/lptools_0.2.0.orig.tar.gz \
-            --credentials ${{ env.LP_CREDENTIALS }}
+            --app "${{ inputs.name }}" \
+            --project "${{ inputs.lp-project }}" \
+            --version "${{ matrix.version }}" \
+            --tarball "${tarball}" \
+            --credentials "${{ env.LP_CREDENTIALS }}"
           
       - name: Release the package
         id: create-new-release
