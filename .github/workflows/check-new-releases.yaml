@@ -73,6 +73,11 @@ jobs:
       - name: package update
         run: |
           cd output/${{ matrix.version }}
+      - name: Delete previous release
+        uses: liudonghua123/delete-release-action@v1
+          with:
+          release_name: Release ${{ matrix.version }}
+          suppress_errors: true
       - name: Release the package
         id: create-new-release
         uses: actions/create-release@v1
