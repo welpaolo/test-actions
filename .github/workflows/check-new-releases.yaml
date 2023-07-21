@@ -75,6 +75,8 @@ jobs:
           cd output/${{ matrix.version }}
       - name: Delete previous release
         uses: liudonghua123/delete-release-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           release_name: Release ${{ matrix.version }}
           suppress_errors: true
