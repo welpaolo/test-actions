@@ -71,6 +71,7 @@ def add_config_arguments() -> ArgumentParser:
     )
     return parser
 
+
 def get_launchpad(credential_file:str) -> Launchpad:
     """Get launchpad handler."""
     launchpad = Launchpad.login_with('hello-world', 'production', credentials_file=credential_file, version='devel',timeout=30)

@@ -5,19 +5,33 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  pull_request:
-  schedule:
-    - cron: '53 0 * * *' # Daily at 00:53 UTC
   workflow_call:
+    inputs:
+      juju-snap-channel:
+        description: Snap channel for Juju CLI
+        default: 3.2/stable
+        type: string
+      libjuju-version-specifier:
+        description: |
+          python-libjuju version specifier (e.g. ">=1.3")
+          https://packaging.python.org/en/latest/glossary/#term-Version-Specifier
+        required: false
+        type: string
 
 jobs:
   download-builds:
     name: Build project
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+    strategy:
+      matrix:
+        app:
+          - opensearch
+          - spark
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
       - name: Create credentials file
         env:
           CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}
@@ -31,12 +45,16 @@ jobs:
           echo "access_token = $ACCESS_TOKEN" >> credentials.txt
           echo "access_secret = $ACCESS_SECRET" >> credentials.txt
           cat credentials.txt
+
       - name: Install python dependencies
         run: pip install -r requirements.txt
+
       - name: Create folder for storing the builds
         run: mkdir output; cat credentials.txt
+
       - name: Run download script
         run: python3 launchpad_downloader.py --repository-url ~paolosottovia/test-spark-build/+git/test-spark-build --branch-prefix spark- --credential-file credentials.txt --output-folder output
+
       - name: Check downloaded builds
         run: ls output
       - name: Zip builds
