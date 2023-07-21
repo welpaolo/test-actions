@@ -17,6 +17,7 @@ def parse_args() -> Namespace:
     parser.add_argument("-p", "--project", help="LP Project name.")
     parser.add_argument("-t", "--tarball", help="Tarball file path.")
     parser.add_argument("-v", "--version", help="The application version (i.e: 2.8.0)")
+    parser.add_argument("-c", "--credentials", help="Credentials file to authenticate the LP client.")
     return parser.parse_args()
 
 
@@ -82,7 +83,7 @@ def main():
     args = parse_args()
 
     # get launchpad client
-    launchpad = Launchpad.login_with(args.project, LP_SERVER)
+    launchpad = Launchpad.login_with(args.project, LP_SERVER, credentials_file=args.credentials)
     lp_project = launchpad.projects[args.project]
 
     # fetch project series matching with version
