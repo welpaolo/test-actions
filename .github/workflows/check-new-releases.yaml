@@ -77,7 +77,7 @@ jobs:
       - name: Generate matrix with all built versions
         id: set-matrix
         run: |
-          echo "::set-output name=matrix::$(ls -l output/ | awk -F ' ' '{print $9}' |  jq -R -s -c 'split("\n") | map(select(length > 0))')"
+          echo "::set-output name=matrix::$(ls -A1 output/ | jq -R -s -c 'split("\n")[:-1]')"
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
 
