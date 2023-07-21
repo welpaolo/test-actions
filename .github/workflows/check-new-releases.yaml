@@ -75,7 +75,7 @@ jobs:
           cd output/${{ matrix.version }}
       - name: Delete previous release
         uses: liudonghua123/delete-release-action@v1
-          with:
+        with:
           release_name: Release ${{ matrix.version }}
           suppress_errors: true
       - name: Release the package
