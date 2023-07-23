@@ -1,9 +1,5 @@
 name: Check new builds and release them
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 on:
   workflow_call:
     inputs:
