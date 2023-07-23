@@ -113,7 +113,15 @@ jobs:
             --version "${{ matrix.version }}" \
             --tarball "${tarball}" \
             --credentials "${{ env.LP_CREDENTIALS }}"
-          
+
+      - name: Delete previous release
+        uses: liudonghua123/delete-release-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_name: Release ${{ matrix.version }}
+          suppress_errors: true
+
       - name: Release the package
         id: create-new-release
         uses: actions/create-release@v1
@@ -142,3 +150,36 @@ jobs:
           asset_path: output/${{ matrix.version }}/${{ matrix.version }}-bin-custom-spark.tgz.sha512
           asset_name: ${{ matrix.version }}.sha512
           asset_content_type: application/txt
+
+      - name: Upload Java dependencies
+        env:
+          JFROG_USER: ${{ secrets.ARTIFACTORY_USER }}
+          JFROG_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
+          JFROG_DEPLOY_URL: ${{ secrets.ARTIFACTORY_DEPLOY_URL }}
+        run: |
+          cd output/${{ matrix.version }}/
+          unzip repository.zip
+          cd repository
+          find . -mindepth 3 -maxdepth 6 -type d -ls | awk -F ' ' '{print $11}' > paths.txt
+          while read path; do
+            count=$( ls "$path"/*.jar 2>/dev/null | wc -l )
+            if [ $count != 0 ]
+            then 
+              echo "Folder to upload: $path"
+              for file in "$path"/*; do
+                filename=$(echo "$file" | awk -F '/' '{print $NF}')
+                repo_path="${file:2}"
+                echo "repo_path: $repo_path"
+                folder_structure=${repo_path%"$filename"*}
+                if [[ $filename != _* ]]
+                then 
+                  echo "Upload file: $file"
+                  curl -X PUT -u "$JFROG_USER":"$JFROG_TOKEN" -T "$file" "${JFROG_DEPLOY_URL}${folder_structure}"
+                else
+                  echo "DO NOT Upload file: $file"
+                fi
+              done
+            fi 
+          done < paths.txt
+      
+        
