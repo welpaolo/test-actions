@@ -33,6 +33,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Print passed vars
+        run: |
+          echo "name: ${{ inputs.name }}"
+          echo "lp-project: ${{ inputs.lp-project }}"
+          echo "lp-repo: ${{ inputs.lp-repo }}"
+          echo "lp-branch-prefix: ${{ inputs.lp-branch-prefix }}"
+
       - name: Create credentials file
         env:
           CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}
