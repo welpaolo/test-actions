@@ -6,12 +6,11 @@ from launchpadlib.launchpad import Launchpad
 from pathlib import Path
 
 
-# PACKAGE = "OpenSearch"
-# PROJECT = "opensearch-lp-build"
 LP_SERVER = "production"
 
 
 def parse_args() -> Namespace:
+    """Parse command line args."""
     parser = ArgumentParser()
     parser.add_argument("-a", "--app", help="Application name, i.e: OpenSearch, Spark etc.")
     parser.add_argument("-p", "--project", help="LP Project name.")
@@ -80,6 +79,7 @@ def upload_release_files(release, app: str, tarball_file_path: str, version: str
 
 
 def main():
+    """Download and store latest release artifacts for the release branches of a product."""
     args = parse_args()
 
     # get launchpad client
