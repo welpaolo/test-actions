@@ -4,17 +4,21 @@ on:
   workflow_call:
     inputs:
       name:
+        required: true
+        type: string
         description: The name of the product to be released.
-        type: string
       lp-project:
+        required: true
+        type: string
         description: The LP build project for the product to be released.
-        type: string
       lp-repo:
+        required: true
+        type: string
         description: The relative path to the LP git repo of the Product to be released.
-        type: string
       lp-branch-prefix:
-        description: The prefix of the LP Git branches producing builds of the Product to be released.
+        required: true
         type: string
+        description: The prefix of the LP Git branches producing builds of the Product to be released.
 
 env:
   LP_CREDENTIALS: credentials.txt

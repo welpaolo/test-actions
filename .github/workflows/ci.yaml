@@ -17,16 +17,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        product:
-          - name: spark
-            lp-project: test-spark-build
-            lp-repo: ~paolosottovia/test-spark-build/+git/test-spark-build
-            lp-branch-prefix: spark-
-
-          - name: opensearch
-            lp-project: opensearch-lp-build
-            lp-repo: ~medib/opensearch-lp-build/+git/opensearch-lp-build
-            lp-branch-prefix: lp-
+        product: [
+          {name: spark, lp-project: test-spark-build, lp-repo: ~paolosottovia/test-spark-build/+git/test-spark-build, lp-branch-prefix: spark-},
+          {name: opensearch, lp-project: opensearch-lp-build, lp-repo: ~medib/opensearch-lp-build/+git/opensearch-lp-build, lp-branch-prefix: lp-}
+        ]
+#          - name: spark
+#            lp-project: test-spark-build
+#            lp-repo: ~paolosottovia/test-spark-build/+git/test-spark-build
+#            lp-branch-prefix: spark-
+#
+#          - name: opensearch
+#            lp-project: opensearch-lp-build
+#            lp-repo: ~medib/opensearch-lp-build/+git/opensearch-lp-build
+#            lp-branch-prefix: lp-
     with:
       name: ${{ matrix.product.name }}
       lp-project: ${{ matrix.app.lp-project }}
