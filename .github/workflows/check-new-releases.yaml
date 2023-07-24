@@ -83,7 +83,7 @@ jobs:
       - name: Generate matrix with all built versions
         id: set-matrix
         run: |
-          echo "::set-output name=matrix::$(ls -A1 ${{ env.OUTPUT_DIR }} | jq -R -s -c 'split("\n")[:-1]')"
+          echo "::set-output name=matrix::$(ls -A1 ${{ env.OUTPUT_DIR }} | awk -F- '{print $NF}' | jq -R -s -c 'split("\n")[:-1]')"
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
 
@@ -130,7 +130,7 @@ jobs:
         id: create-new-lp-release
         run: |
           artifacts_path="${{ env.OUTPUT_DIR }}/${{ matrix.version }}/"
-          tarball=$(find ${artifacts_path} -maxdepth 1 -mindepth 1 -name "${{ inputs.name }}-2.8.0-*.tar.gz")
+          tarball=$(find ${artifacts_path} -maxdepth 1 -mindepth 1 -name "${{ inputs.name }}-${{ matrix.version }}-*.tar.gz")
           echo $tarball
           
           # "${{ matrix.version }}"
@@ -138,7 +138,7 @@ jobs:
           python3 launchpad_release.py \
             --app "${{ inputs.name }}" \
             --project "${{ inputs.lp-project }}" \
-            --version "2.8.0" \
+            --version "${{ matrix.version }}" \
             --tarball "${tarball}" \
             --credentials "${{ env.LP_CREDENTIALS }}"
 
