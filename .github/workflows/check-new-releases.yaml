@@ -88,7 +88,7 @@ jobs:
       - name: Store builds
         uses: actions/upload-artifact@v3
         with:
-          name: releases
+          name: releases-${{  inputs.name }}
           path: ${{ env.OUTPUT_DIR }}-${{  inputs.name }}.zip
 
       - name: Generate matrix with all built versions
@@ -112,7 +112,7 @@ jobs:
       - name: Download releases
         uses: actions/download-artifact@v3
         with:
-          name: releases
+          name: releases-${{  inputs.name }}
 
       - name: Test output
         run: unzip ${{ env.OUTPUT_DIR }}-${{  inputs.name }}.zip; ls "${{ env.OUTPUT_DIR }}";
