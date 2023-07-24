@@ -46,6 +46,7 @@ def _get_tokenized_librarian_url(lp: Launchpad, file_url: str) -> str:
 def parse_args() -> Namespace:
     """Parse command line args"""
     parser = argparse.ArgumentParser()
+    parser.add_argument("--app", help="Application name, i.e: OpenSearch, Spark etc.")
     parser.add_argument(
         "--repository-url",
         type=str,
@@ -143,6 +144,7 @@ def get_build_runs_by_branch(branches: Dict[str, List[Any]]):
 
 def download_build_artifacts_by_branch(
     launchpad: Launchpad,
+    app: str,
     branch: str,
     build_run,
     output_folder: str
@@ -154,9 +156,14 @@ def download_build_artifacts_by_branch(
     for url_file in build_run.artifact_urls:
         url = _get_tokenized_librarian_url(launchpad, url_file)
         # download each file related to the build
-        file_name = unquote(str(url_file).split('/')[-1])
+        file_name = str(url_file).split('/')[-1]
+
+        # we want to skip non binaries / signature files (i.e logs )
+        if app not in file_name:
+            continue
+
         try:
-            urllib.request.urlretrieve(url, f"{output_directory}/{file_name}")
+            urllib.request.urlretrieve(url, f"{output_directory}/{unquote(file_name)}")
         except URLError as e:
             raise RuntimeError("Failed to download '{}'. '{}'".format(url, e.reason))
 
@@ -182,7 +189,9 @@ def main():
             continue
 
         last_run = sorted(runs, key=lambda x: x.date_built, reverse=True)[0]
-        download_build_artifacts_by_branch(launchpad, branch, last_run, args.output_folder)
+        download_build_artifacts_by_branch(
+            launchpad, args.app, branch, last_run, args.output_folder
+        )
 
 
 if __name__ == "__main__":

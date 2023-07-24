@@ -46,10 +46,6 @@ jobs:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
         run: |
-          echo "CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}"
-          echo "ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}"
-          echo "ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}"
-          
           cat <<EOF >> ${{ env.LP_CREDENTIALS }}
           [1]
           consumer_key = ${CONSUMER_KEY}
@@ -69,6 +65,7 @@ jobs:
       - name: Run download script
         run: |
           python3 launchpad_downloader.py \
+            --app "${{ inputs.name }}" \
             --repository-url "${{ inputs.lp-repo }}" \
             --branch-prefix "${{ inputs.lp-branch-prefix }}" \
             --credential-file "${{ env.LP_CREDENTIALS }}" \
