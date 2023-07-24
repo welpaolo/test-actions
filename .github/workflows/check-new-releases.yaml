@@ -102,6 +102,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: releases
+          path: ${{ env.OUTPUT_DIR }}
 
       - name: Test output
         run: ls "${{ env.OUTPUT_DIR }}"
