@@ -124,8 +124,8 @@ jobs:
       - name: LP release
         id: create-new-lp-release
         run: |
-          tarball=$(find ./ -maxdepth 1 -mindepth 1 -name "${inputs.name}-${{ matrix.version }}-*.tar.gz")
-          
+          tarball=$(find ./ -maxdepth 1 -mindepth 1 -name "*${inputs.name}-*.tar.gz")
+          echo "Tarball name: $tarball"
           python3 launchpad_release.py \
             --app "${{ inputs.name }}" \
             --project "${{ inputs.lp-project }}" \
