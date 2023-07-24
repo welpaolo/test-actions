@@ -193,7 +193,7 @@ jobs:
                 if [[ $filename != _* ]]
                 then 
                   echo "Upload file: $file"
-                  curl -X PUT -u "${{ inputs.artifactory-user }}":"${{ inputs.artifactory-token }}" -T "$file" "${{ inputs.artifactory-url }}${folder_structure}"
+                  curl -X PUT -u "${{ secrets[inputs.artifactory-user] }}":"${{ secrets[inputs.artifactory-token] }}" -T "$file" "${{ secrets[inputs.artifactory-url] }}${folder_structure}"
                 else
                   echo "DO NOT Upload file: $file"
                 fi

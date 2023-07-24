@@ -33,10 +33,6 @@ jobs:
             artifactory-url: ARTIFACTORY_DEPLOY_URL_OPENSEARCH
             artifactory-user: ARTIFACTORY_USER_OPENSEARCH
             artifactory-token: ARTIFACTORY_TOKEN_OPENSEARCH
-    env:
-      ARTIFACTORY_DEPLOY_URL: ${{ secrets[matrix.artifactory-url] }}
-      ARTIFACTORY_USER: ${{ secrets[matrix.artifactory-user] }}
-      ARTIFACTORY_TOKEN: ${{ secrets[matrix.artifactory-token] }}
       
     with:
       name: ${{ matrix.product.name }}
