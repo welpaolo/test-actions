@@ -14,6 +14,10 @@ jobs:
   release:
     secrets: inherit
     uses: ./.github/workflows/check-new-releases.yaml
+    env:
+      ARTIFACTORY_DEPLOY_URL: ${{ secrets.ARTIFACTORY_DEPLOY_URL }}
+      ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+      ARTIFACTORY_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -22,17 +26,17 @@ jobs:
             lp-project: test-spark-build
             lp-repo: ~paolosottovia/test-spark-build/+git/test-spark-build
             lp-branch-prefix: spark-
-            artifactory-url: ${{ secrets.ARTIFACTORY_USER }}
-            artifactory-user: ${{ secrets.ARTIFACTORY_TOKEN }}
-            artifactory-token: ${{ secrets.ARTIFACTORY_DEPLOY_URL }}
+            artifactory-url: $ARTIFACTORY_DEPLOY_URL
+            artifactory-user: $ARTIFACTORY_USER
+            artifactory-token: $ARTIFACTORY_TOKEN
 
           - name: opensearch
             lp-project: opensearch-lp-build
             lp-repo: ~medib/opensearch-lp-build/+git/opensearch-lp-build
             lp-branch-prefix: lp-
-            artifactory-url: ${{ secrets.ARTIFACTORY_USER }}
-            artifactory-user: ${{ secrets.ARTIFACTORY_TOKEN }}
-            artifactory-token: ${{ secrets.ARTIFACTORY_DEPLOY_URL }}
+            artifactory-url: $ARTIFACTORY_DEPLOY_URL
+            artifactory-user: $ARTIFACTORY_USER
+            artifactory-token: $ARTIFACTORY_TOKEN
     with:
       name: ${{ matrix.product.name }}
       lp-project: ${{ matrix.product.lp-project }}
