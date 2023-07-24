@@ -150,7 +150,7 @@ def download_build_artifacts_by_branch(
     output_folder: str
 ) -> None:
     """Download build artifacts of a build run."""
-    output_directory = f"{output_folder}/{str(branch).split('/')[-1]}"
+    output_directory = f"{output_folder}/{str(branch).split('-')[-1]}"
     os.makedirs(output_directory, exist_ok=True)
 
     for url_file in build_run.artifact_urls:
