@@ -83,7 +83,7 @@ jobs:
             --output-folder ${{ env.OUTPUT_DIR }}
 
       - name: Check downloaded builds
-        run: ls ${{ env.OUTPUT_DIR }}; zip -r ${{ env.OUTPUT_DIR }}.zip ${{ env.OUTPUT_DIR }}
+        run: ls ${{ env.OUTPUT_DIR }}; zip -r ${{ env.OUTPUT_DIR }}-${{  inputs.name }}.zip ${{ env.OUTPUT_DIR }}
 
       - name: Store builds
         uses: actions/upload-artifact@v3
