@@ -29,7 +29,7 @@ on:
         description: The username of the artifactory repository.
       artifactory-token:
         required: true
-        type: true
+        type: string
         description: The authentication token of the artifactory.
 
 env:
