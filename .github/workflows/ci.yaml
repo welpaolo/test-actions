@@ -14,10 +14,6 @@ jobs:
   release:
     secrets: inherit
     uses: ./.github/workflows/check-new-releases.yaml
-    env:
-      ARTIFACTORY_DEPLOY_URL: ${{ secrets.ARTIFACTORY_DEPLOY_URL }}
-      ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
-      ARTIFACTORY_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
