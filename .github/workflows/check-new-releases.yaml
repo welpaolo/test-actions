@@ -77,10 +77,10 @@ jobs:
       - name: Run download script
         run: |
           python3 launchpad_downloader.py \
-            --repository-url "${{ inputs.lp-repo }}" \
-            --branch-prefix "${{ inputs.lp-branch-prefix }}" \
+            --repository-url ${{ inputs.lp-repo }} \
+            --branch-prefix ${{ inputs.lp-branch-prefix }} \
             --credential-file ${{ env.LP_CREDENTIALS }} \
-            --output-folder "${{ env.OUTPUT_DIR }}"
+            --output-folder ${{ env.OUTPUT_DIR }}
 
       - name: Check downloaded builds
         run: ls ${{ env.OUTPUT_DIR }}
