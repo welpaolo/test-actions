@@ -1,0 +1,204 @@
+name: Check new builds and release them
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        required: true
+        type: string
+        description: The name of the product to be released.
+      lp-project:
+        required: true
+        type: string
+        description: The LP build project for the product to be released.
+      lp-repo:
+        required: true
+        type: string
+        description: The relative path to the LP git repo of the Product to be released.
+      lp-branch-prefix:
+        required: true
+        type: string
+        description: The prefix of the LP Git branches producing builds of the Product to be released.
+      artifactory-url:
+        required: true
+        type: string
+        description: The url of the artifactor where the jars will be uploaded.
+      artifactory-user:
+        required: true
+        type: string
+        description: The username of the artifactory repository.
+      artifactory-token:
+        required: true
+        type: true
+        description: The authentication token of the artifactory.
+
+env:
+  LP_CREDENTIALS: credentials.txt
+  OUTPUT_DIR: output
+
+jobs:
+  download-builds:
+    name: Build project
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Print passed vars
+        run: |
+          echo "name: ${{ inputs.name }}"
+          echo "lp-project: ${{ inputs.lp-project }}"
+          echo "lp-repo: ${{ inputs.lp-repo }}"
+          echo "lp-branch-prefix: ${{ inputs.lp-branch-prefix }}"
+
+      - name: Create credentials file
+        env:
+          CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
+        run: |
+          cat <<EOF >> ${{ env.LP_CREDENTIALS }}
+          [1]
+          consumer_key = "${CONSUMER_KEY}"
+          consumer_secret = 
+          access_token = "${ACCESS_TOKEN}"
+          access_secret = "${ACCESS_SECRET}"
+          EOF
+          
+          cat credentials.txt
+
+      - name: Install python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create folder for storing the builds
+        run: mkdir "${{ env.OUTPUT_DIR }}"; cat "${{ env.LP_CREDENTIALS }}"
+
+      - name: Run download script
+        run: |
+          python3 launchpad_downloader.py \
+            --repository-url "${{ inputs.lp-repo }}" \
+            --branch-prefix "${{ inputs.lp-branch-prefix }}" \
+            --credential-file "${{ env.LP_CREDENTIALS }}" \
+            --output-folder "${{ env.OUTPUT_DIR }}"
+
+      - name: Check downloaded builds
+        run: ls ${{ env.OUTPUT_DIR }}
+
+      - name: Store builds
+        uses: actions/upload-artifact@v3
+        with:
+          name: releases
+          path: ${{ env.OUTPUT_DIR }}
+
+      - name: Generate matrix with all built versions
+        id: set-matrix
+        run: |
+          echo "::set-output name=matrix::$(ls -A1 ${{ env.OUTPUT_DIR }} | jq -R -s -c 'split("\n")[:-1]')"
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+  release-artifact:
+    needs: download-builds
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{ fromJson(needs.download-builds.outputs.matrix) }}
+    steps:
+      - name: Print release version
+        run: echo ${{ matrix.version }}
+
+      - name: Download releases
+        uses: actions/download-artifact@v3
+        with:
+          name: releases
+
+      - name: Test output
+        run: ls "${{ env.OUTPUT_DIR }}"
+
+      - name: package update
+        run: |
+          cd "${{ env.OUTPUT_DIR }}/${{ matrix.version }}"
+
+      - name: LP release
+        id: create-new-lp-release
+        run: |
+          tarball=$(find ./ -maxdepth 1 -mindepth 1 -name "${inputs.name}-${{ matrix.version }}-*.tar.gz")
+          
+          python3 launchpad_release.py \
+            --app "${{ inputs.name }}" \
+            --project "${{ inputs.lp-project }}" \
+            --version "${{ matrix.version }}" \
+            --tarball "${tarball}" \
+            --credentials "${{ env.LP_CREDENTIALS }}"
+
+      - name: Delete previous release
+        uses: liudonghua123/delete-release-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_name: Release ${{ matrix.version }}
+          suppress_errors: true
+
+      - name: Release the package
+        id: create-new-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ matrix.version }}
+          release_name: Release ${{ matrix.version }}
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-new-release.outputs.upload_url }}
+          asset_path: ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ matrix.version }}-bin-custom-spark.tgz
+          asset_name: ${{ matrix.version }}.tgz
+          asset_content_type: application/zip
+
+      - name: Upload checksum
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-new-release.outputs.upload_url }}
+          asset_path: output/${{ matrix.version }}/${{ matrix.version }}-bin-custom-spark.tgz.sha512
+          asset_name: ${{ matrix.version }}.sha512
+          asset_content_type: application/txt
+
+      - name: Upload Java dependencies
+        # env:
+        #   JFROG_USER: ${{ secrets.ARTIFACTORY_USER }}
+        #   JFROG_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
+        #   JFROG_DEPLOY_URL: ${{ secrets.ARTIFACTORY_DEPLOY_URL }}
+        run: |
+          cd output/${{ matrix.version }}/
+          unzip repository.zip
+          cd repository
+          find . -mindepth 3 -maxdepth 10 -type d -ls | awk -F ' ' '{print $11}' > paths.txt
+          while read path; do
+            count=$( ls "$path"/*.jar 2>/dev/null | wc -l )
+            if [ $count != 0 ]
+            then 
+              echo "Folder to upload: $path"
+              for file in "$path"/*; do
+                filename=$(echo "$file" | awk -F '/' '{print $NF}')
+                repo_path="${file:2}"
+                echo "repo_path: $repo_path"
+                folder_structure=${repo_path%"$filename"*}
+                if [[ $filename != _* ]]
+                then 
+                  echo "Upload file: $file"
+                  curl -X PUT -u "${{ inputs.artifactory-user }}":"${{ inputs.artifactory-token }}" -T "$file" "${{ inputs.artifactory-url }}${folder_structure}"
+                else
+                  echo "DO NOT Upload file: $file"
+                fi
+              done
+            fi 
+          done < paths.txt
+      
+        
