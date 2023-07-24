@@ -89,7 +89,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: releases
-          path: ${{ env.OUTPUT_DIR }}.zip
+          path: ${{ env.OUTPUT_DIR }}-${{  inputs.name }}.zip
 
       - name: Generate matrix with all built versions
         id: set-matrix
@@ -115,7 +115,7 @@ jobs:
           name: releases
 
       - name: Test output
-        run: unzip ${{ env.OUTPUT_DIR }}.zip; ls "${{ env.OUTPUT_DIR }}";
+        run: unzip ${{ env.OUTPUT_DIR }}-${{  inputs.name }}.zip; ls "${{ env.OUTPUT_DIR }}";
 
       - name: package update
         run: |
