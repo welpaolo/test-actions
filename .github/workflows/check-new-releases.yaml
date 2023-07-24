@@ -98,6 +98,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Create credentials file
+        env:
+          CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
+        run: |
+          cat <<EOF >> ${{ env.LP_CREDENTIALS }}
+          [1]
+          consumer_key = ${CONSUMER_KEY}
+          consumer_secret = 
+          access_token = ${ACCESS_TOKEN}
+          access_secret = ${ACCESS_SECRET}
+          EOF
+
+          cat credentials.txt
+
       - name: Print release version
         run: echo ${{ matrix.version }}
 
