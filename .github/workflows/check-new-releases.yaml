@@ -172,7 +172,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-new-release.outputs.upload_url }}
-          asset_path: output/${{ matrix.version }}/${{ matrix.version }}-bin-custom-spark.tgz.sha512
+          asset_path: ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ matrix.version }}-bin-custom-spark.tgz.sha512
           asset_name: ${{ matrix.version }}.sha512
           asset_content_type: application/txt
 
@@ -182,7 +182,7 @@ jobs:
           JFROG_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
           JFROG_DEPLOY_URL: ${{ secrets.ARTIFACTORY_DEPLOY_URL }}
         run: |
-          cd output/${{ matrix.version }}/
+          cd ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/
           unzip repository.zip
           cd repository
           find . -mindepth 3 -maxdepth 6 -type d -ls | awk -F ' ' '{print $11}' > paths.txt
