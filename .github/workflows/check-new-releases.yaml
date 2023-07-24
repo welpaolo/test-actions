@@ -130,7 +130,7 @@ jobs:
         id: create-new-lp-release
         run: |
           artifacts_path="${{ env.OUTPUT_DIR }}/${{ matrix.version }}/"
-          tarball=$(find ${artifacts_path} -maxdepth 1 -mindepth 1 -name "${{ inputs.name }}-${{ matrix.version }}-*.tar.gz")
+          tarball=$(find ${artifacts_path} -maxdepth 1 -mindepth 1 -name "${{ inputs.name }}-2.8.0-*.tar.gz")
           echo $tarball
           
           # "${{ matrix.version }}"
