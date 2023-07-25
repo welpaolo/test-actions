@@ -176,6 +176,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           release_name: Release ${{ matrix.version }}
+          tag_name: ${{ matrix.version }}
 
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
