@@ -31,6 +31,10 @@ on:
         required: true
         type: string
         description: The authentication token of the artifactory.
+      tarball-name-regex:
+        required: true
+        type: string
+        description: The name of the tarball.
 
 env:
   LP_CREDENTIALS: credentials.txt
@@ -95,6 +99,7 @@ jobs:
         id: set-matrix
         run: |
           echo "::set-output name=matrix::$(ls -A1 ${{ env.OUTPUT_DIR }} | jq -R -s -c 'split("\n")[:-1]')"
+          echo "${{ steps.set-matrix.outputs.matrix }}"
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
 
@@ -121,18 +126,18 @@ jobs:
         run: |
           cd "${{ env.OUTPUT_DIR }}/${{ matrix.version }}"; ls
 
-      - name: LP release
-        id: create-new-lp-release
-        run: |
-          ls
-          tarball=$(find ./ -maxdepth 1 -mindepth 1 -name "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/*${inputs.name}-*.tar.gz")
-          echo "Tarball name: $tarball"
-          python3 launchpad_release.py \
-            --app "${{ inputs.name }}" \
-            --project "${{ inputs.lp-project }}" \
-            --version "${{ matrix.version }}" \
-            --tarball "${tarball}" \
-            --credentials "${{ env.LP_CREDENTIALS }}"
+      # - name: LP release
+      #   id: create-new-lp-release
+      #   run: |
+      #     ls
+      #     tarball=$(find ./ -maxdepth 1 -mindepth 1 -name "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/*${inputs.name}-*.tar.gz")
+      #     echo "Tarball name: $tarball"
+      #     python3 launchpad_release.py \
+      #       --app "${{ inputs.name }}" \
+      #       --project "${{ inputs.lp-project }}" \
+      #       --version "${{ matrix.version }}" \
+      #       --tarball "${tarball}" \
+      #       --credentials "${{ env.LP_CREDENTIALS }}"
 
       - name: Delete previous release
         uses: liudonghua123/delete-release-action@v1
@@ -172,12 +177,26 @@ jobs:
           asset_content_type: application/txt
 
       - name: Upload Java dependencies
-        # env:
-        #   JFROG_USER: ${{ secrets.ARTIFACTORY_USER }}
-        #   JFROG_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
-        #   JFROG_DEPLOY_URL: ${{ secrets.ARTIFACTORY_DEPLOY_URL }}
         run: |
           cd output/${{ matrix.version }}/
+          # extract jars from tarball
+          
+          if [ ls ${{ inputs.tarball-name-regex } | wc -l} != 1]; then
+            echo "Tarball file not found with regex: $"
+            exit 1
+          tarball_file = $(ls ${{ inputs.tarball-name-regex }) 
+          mkdir tmp && tar xf $tarball_file -C tmp --strip-components 1
+          cd tmp
+          find . -type f -name "*.jar" | awk -F '/' '{print $NF}' > tarball_jars.txt
+          cat ../jar-files.txt
+          cd ..
+          readarray -t jar_files < tmp/jar_files.txt
+          # loop over the mvn local repository
+          if [ ! -f repository.zip ]
+          then
+            echo "No dependecies found!"
+            exit 0
+          fi
           unzip repository.zip
           cd repository
           find . -mindepth 3 -maxdepth 10 -type d -ls | awk -F ' ' '{print $11}' > paths.txt
@@ -185,20 +204,26 @@ jobs:
             count=$( ls "$path"/*.jar 2>/dev/null | wc -l )
             if [ $count != 0 ]
             then 
-              echo "Folder to upload: $path"
-              for file in "$path"/*; do
-                filename=$(echo "$file" | awk -F '/' '{print $NF}')
-                repo_path="${file:2}"
-                echo "repo_path: $repo_path"
-                folder_structure=${repo_path%"$filename"*}
-                if [[ $filename != _* ]]
-                then 
-                  echo "Upload file: $file"
-                  curl -X PUT -u "${{ secrets[inputs.artifactory-user] }}":"${{ secrets[inputs.artifactory-token] }}" -T "$file" "${{ secrets[inputs.artifactory-url] }}${folder_structure}"
-                else
-                  echo "DO NOT Upload file: $file"
-                fi
-              done
+              echo "Folder anlyzed: $path"
+              jar_file = $( ls *.jar | awk -F '/' '{print $NF}')
+              echo "JAR FILE: $jar_file"
+              if [[ " ${array[*]} " =~ " ${value} " ]]; then
+                for file in "$path"/*; do
+                  filename=$(echo "$file" | awk -F '/' '{print $NF}')
+                  repo_path="${file:2}"
+                  echo "repo_path: $repo_path"
+                  folder_structure=${repo_path%"$filename"*}
+                  if [[ $filename != _* ]]
+                  then 
+                    echo "Upload file: $file"
+                    curl -X PUT -u "${{ secrets[inputs.artifactory-user] }}":"${{ secrets[inputs.artifactory-token] }}" -T "$file" "${{ secrets[inputs.artifactory-url] }}${folder_structure}"
+                  else
+                    echo "DO NOT Upload file: $file"
+                  fi
+                done
+              else
+                echo "Jar file not present in the list: $jar_file"
+              fi
             fi 
           done < paths.txt
       
