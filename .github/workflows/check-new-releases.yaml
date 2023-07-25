@@ -112,7 +112,7 @@ jobs:
       fail-fast: false
       matrix:
         version: ${{ fromJson(needs.download-builds.outputs.matrix) }}
-        tarball_name_regex: [$${{ needs.download-builds.outputs.tarball_name_regex }}]
+        tarball_name_regex: [ "${{ needs.download-builds.outputs.tarball_name_regex }}" ]
     steps:
       - name: Print passed vars
         run: |
