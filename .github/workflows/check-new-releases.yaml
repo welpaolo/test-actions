@@ -103,6 +103,7 @@ jobs:
           echo "${{ steps.set-matrix.outputs.matrix }}"
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      tarball_name_regex: ${{ inputs.tarball-name-regex }}
 
   release-artifact:
     needs: download-builds
@@ -111,7 +112,16 @@ jobs:
       fail-fast: false
       matrix:
         version: ${{ fromJson(needs.download-builds.outputs.matrix) }}
+        tarball_name_regex: $${{ needs.download-builds.outputs.tarball_name_regex }}
     steps:
+      - name: Print passed vars
+        run: |
+          echo "name: ${{ inputs.name }}"
+          echo "lp-project: ${{ inputs.lp-project }}"
+          echo "lp-repo: ${{ inputs.lp-repo }}"
+          echo "lp-branch-prefix: ${{ inputs.lp-branch-prefix }}"
+          echo "tarball-name-regex: ${{ inputs.tarball-name-regex }}"
+
       - name: Print release version
         run: echo ${{ matrix.version }}
 
@@ -154,10 +164,10 @@ jobs:
         run: |
           cd output/${{ matrix.version }}/
           # extract jars from tarball
-          if [ ls ${{ inputs.tarball-name-regex }} | wc -l} != 1]; then
-            echo "Tarball file not found with regex: ${{ inputs.tarball-name-regex }}"
+          if [ ls ${{ matrix.tarball-name-regex }} | wc -l} != 1]; then
+            echo "Tarball file not found with regex: ${{ matrix.tarball-name-regex }}"
             exit 1
-          tarball_filename=$(ls ${{ inputs.tarball-name-regex }})
+          tarball_filename=$(ls ${{ matrix.tarball-name-regex }})
 
       - name: Release the package
         id: create-new-release
