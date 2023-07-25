@@ -163,7 +163,7 @@ jobs:
         run: |
           cd output/${{ matrix.version }}/
           # extract jars from tarball
-          if [ ls ${{ inputs.tarball-regex }} | wc -l} != 1]; then
+          if [ ls ${{ inputs.tarball-regex }} | wc -l != 1]; then
             echo "Tarball file not found with regex: ${{ inputs.tarball-regex }}"
             exit 1
           fi
@@ -175,7 +175,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ matrix.version }}
           release_name: Release ${{ matrix.version }}
 
       - name: Upload release asset
@@ -198,7 +197,7 @@ jobs:
           asset_name: ${{ matrix.version }}.sha512
           asset_content_type: application/txt
 
-      - name: Upload Java dependencies
+      - name: Upload Java dependencies to artifactory
         run: |
           
           tarball_file = ${{ steps.get-tarball-name.tarball_filename }}
