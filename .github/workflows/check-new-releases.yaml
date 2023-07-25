@@ -166,6 +166,7 @@ jobs:
           if [ ls ${{ inputs.tarball-regex }} | wc -l} != 1]; then
             echo "Tarball file not found with regex: ${{ inputs.tarball-regex }}"
             exit 1
+          fi
           tarball_filename=$(ls ${{ inputs.tarball-regex }})
 
       - name: Release the package
