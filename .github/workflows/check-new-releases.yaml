@@ -204,7 +204,7 @@ jobs:
       - name: Upload Java dependencies to artifactory
         run: |
           # doc
-          mkdir tmp && tar xf ${{ env.TARBALL_FILENAME }} -C tmp --strip-components 1
+          mkdir tmp && tar xf ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ env.TARBALL_FILENAME }} -C tmp --strip-components 1
           cd tmp
           find . -type f -name "*.jar" | awk -F '/' '{print $NF}' > tarball_jars.txt
           cat ../jar-files.txt
