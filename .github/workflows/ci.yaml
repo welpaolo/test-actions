@@ -44,3 +44,4 @@ jobs:
       artifactory-url: ${{ matrix.artifactory-url }}
       artifactory-user: ${{ matrix.artifactory-user }}
       artifactory-token: ${{ matrix.artifactory-token }}
+      tarball-name-regex: ${{ matrix.tarball-name-regex }}
