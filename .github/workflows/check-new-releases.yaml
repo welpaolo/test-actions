@@ -181,10 +181,10 @@ jobs:
           cd output/${{ matrix.version }}/
           # extract jars from tarball
           
-          if [ ls ${{ inputs.tarball-name-regex } | wc -l} != 1]; then
-            echo "Tarball file not found with regex: $"
+          if [ ls ${{ inputs.tarball-name-regex }} | wc -l} != 1]; then
+            echo "Tarball file not found with regex: ${{ inputs.tarball-name-regex }}"
             exit 1
-          tarball_file = $(ls ${{ inputs.tarball-name-regex }) 
+          tarball_file = $(ls ${{ inputs.tarball-name-regex }}) 
           mkdir tmp && tar xf $tarball_file -C tmp --strip-components 1
           cd tmp
           find . -type f -name "*.jar" | awk -F '/' '{print $NF}' > tarball_jars.txt
