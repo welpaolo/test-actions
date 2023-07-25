@@ -55,6 +55,7 @@ jobs:
           echo "lp-project: ${{ inputs.lp-project }}"
           echo "lp-repo: ${{ inputs.lp-repo }}"
           echo "lp-branch-prefix: ${{ inputs.lp-branch-prefix }}"
+          echo "tarball-name-regex: ${{ inputs.tarball-name-regex }}"
 
       - name: Create credentials file
         env:
