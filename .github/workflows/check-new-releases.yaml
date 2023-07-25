@@ -163,7 +163,8 @@ jobs:
         run: |
           cd output/${{ matrix.version }}/
           # extract jars from tarball
-          if [ ls ${{ inputs.tarball-regex }} | wc -l != 1]; then
+          count=$( ls ${{ inputs.tarball-regex }} | wc -l )
+          if [ $count != 1 ]; then
             echo "Tarball file not found with regex: ${{ inputs.tarball-regex }}"
             exit 1
           fi
