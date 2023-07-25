@@ -168,6 +168,8 @@ jobs:
             exit 1
           fi
           tarball_filename=$(ls ${{ inputs.tarball-regex }})
+          echo "Tarball filename: $tarball_filename"
+          echo "::set-env name=TARBALL_FILENAME::$tarball_filename"
 
       - name: Release the package
         id: create-new-release
@@ -184,7 +186,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-new-release.outputs.upload_url }}
-          asset_path: ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.tarball_filename }}
+          asset_path: ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/$TARBALL_FILENAME
           asset_name: ${{ matrix.version }}.tgz
           asset_content_type: application/zip
 
@@ -194,15 +196,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-new-release.outputs.upload_url }}
-          asset_path: output/${{ matrix.version }}/${{ steps.get-tarball-name.tarball_filename }}.tgz.sha512
+          asset_path: output/${{ matrix.version }}/$TARBALL_FILENAME.tgz.sha512
           asset_name: ${{ matrix.version }}.sha512
           asset_content_type: application/txt
 
       - name: Upload Java dependencies to artifactory
         run: |
-          
-          tarball_file = ${{ steps.get-tarball-name.tarball_filename }}
-          mkdir tmp && tar xf $tarball_file -C tmp --strip-components 1
+          # doc
+          mkdir tmp && tar xf $TARBALL_FILENAME -C tmp --strip-components 1
           cd tmp
           find . -type f -name "*.jar" | awk -F '/' '{print $NF}' > tarball_jars.txt
           cat ../jar-files.txt
