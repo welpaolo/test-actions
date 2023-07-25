@@ -170,7 +170,7 @@ jobs:
           fi
           tarball_filename=$(ls ${{ inputs.tarball-regex }})
           echo "Tarball filename: $tarball_filename"
-          echo "TARBALL_FILENAME=$tarball_filename" >> "$GITHUB_ENV"
+          echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_ENV
 
       - name: Release the package
         id: create-new-release
