@@ -31,10 +31,10 @@ on:
         required: true
         type: string
         description: The authentication token of the artifactory.
-      tarball-name-regex:
+      tarball-regex:
         required: true
         type: string
-        description: The name of the tarball.
+        description: The regular expression to extract name of the tarball.
 
 env:
   LP_CREDENTIALS: credentials.txt
@@ -55,7 +55,7 @@ jobs:
           echo "lp-project: ${{ inputs.lp-project }}"
           echo "lp-repo: ${{ inputs.lp-repo }}"
           echo "lp-branch-prefix: ${{ inputs.lp-branch-prefix }}"
-          echo "tarball-name-regex: ${{ inputs.tarball-name-regex }}"
+          echo "tarball-regex: ${{ inputs.tarball-regex }}"
 
       - name: Create credentials file
         env:
@@ -103,7 +103,7 @@ jobs:
           echo "${{ steps.set-matrix.outputs.matrix }}"
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-      tarball_name_regex: ${{ inputs.tarball-name-regex }}
+      tarball_name_regex: ${{ inputs.tarball-regex }}
 
   release-artifact:
     needs: download-builds
@@ -120,7 +120,7 @@ jobs:
           echo "lp-project: ${{ inputs.lp-project }}"
           echo "lp-repo: ${{ inputs.lp-repo }}"
           echo "lp-branch-prefix: ${{ inputs.lp-branch-prefix }}"
-          echo "tarball-name-regex: ${{ inputs.tarball-name-regex }}"
+          echo "tarball-regex: ${{ inputs.tarball-regex }}"
 
       - name: Print release version
         run: echo ${{ matrix.version }}
@@ -211,7 +211,7 @@ jobs:
           # loop over the mvn local repository
           if [ ! -f repository.zip ]
           then
-            echo "No dependecies found!"
+            echo "No Jar dependencies found!"
             exit 0
           fi
           unzip repository.zip

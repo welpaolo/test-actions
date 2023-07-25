@@ -25,7 +25,7 @@ jobs:
             artifactory-url: ARTIFACTORY_DEPLOY_URL_SPARK
             artifactory-user: ARTIFACTORY_USER_SPARK
             artifactory-token: ARTIFACTORY_TOKEN_SPARK
-            tarball-name-regex: spark-*.tgz
+            tarball-regex: "spark-*.tgz"
 
           - name: opensearch
             lp-project: opensearch-lp-build
@@ -34,7 +34,7 @@ jobs:
             artifactory-url: ARTIFACTORY_DEPLOY_URL_OPENSEARCH
             artifactory-user: ARTIFACTORY_USER_OPENSEARCH
             artifactory-token: ARTIFACTORY_TOKEN_OPENSEARCH
-            tarball-name-regex: opensearch-*.tar.gz
+            tarball-regex: "opensearch-*.tar.gz"
       
     with:
       name: ${{ matrix.product.name }}
@@ -44,4 +44,4 @@ jobs:
       artifactory-url: ${{ matrix.artifactory-url }}
       artifactory-user: ${{ matrix.artifactory-user }}
       artifactory-token: ${{ matrix.artifactory-token }}
-      tarball-name-regex: ${{ matrix.tarball-name-regex }}
+      tarball-regex: ${{ matrix.tarball-name-regex }}
