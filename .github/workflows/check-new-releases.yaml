@@ -112,7 +112,6 @@ jobs:
       fail-fast: false
       matrix:
         version: ${{ fromJson(needs.download-builds.outputs.matrix) }}
-        tarball_name_regex: [ "${{ needs.download-builds.outputs.tarball_name_regex }}" ]
     steps:
       - name: Print passed vars
         run: |
@@ -164,10 +163,10 @@ jobs:
         run: |
           cd output/${{ matrix.version }}/
           # extract jars from tarball
-          if [ ls ${{ matrix.tarball-name-regex }} | wc -l} != 1]; then
-            echo "Tarball file not found with regex: ${{ matrix.tarball-name-regex }}"
+          if [ ls ${{ inputs.tarball-regex }} | wc -l} != 1]; then
+            echo "Tarball file not found with regex: ${{ inputs.tarball-regex }}"
             exit 1
-          tarball_filename=$(ls ${{ matrix.tarball-name-regex }})
+          tarball_filename=$(ls ${{ inputs.tarball-regex }})
 
       - name: Release the package
         id: create-new-release
