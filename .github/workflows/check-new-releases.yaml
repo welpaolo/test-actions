@@ -209,6 +209,7 @@ jobs:
           cd ..
           echo "Number of jars to upload: $( wc -l tmp/tarball_jars.txt )"
           readarray -t jar_files < tmp/tarball_jars.txt
+          echo "JAR files in the tarball: $jar_files"
           # loop over the mvn local repository
           if [ ! -f ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/repository.zip ]
           then

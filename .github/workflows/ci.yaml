@@ -22,18 +22,18 @@ jobs:
             lp-project: test-spark-build
             lp-repo: ~paolosottovia/test-spark-build/+git/test-spark-build
             lp-branch-prefix: spark-
-            artifactory-url: ARTIFACTORY_DEPLOY_URL_SPARK
-            artifactory-user: ARTIFACTORY_USER_SPARK
-            artifactory-token: ARTIFACTORY_TOKEN_SPARK
+            artifactory-url: ARTIFACTORY_DEPLOY_URL
+            artifactory-user: ARTIFACTORY_USER
+            artifactory-token: ARTIFACTORY_TOKEN
             tarball-regex: "spark-*.tgz"
 
           - name: opensearch
             lp-project: opensearch-lp-build
             lp-repo: ~medib/opensearch-lp-build/+git/opensearch-lp-build
             lp-branch-prefix: lp-
-            artifactory-url: ARTIFACTORY_DEPLOY_URL_OPENSEARCH
-            artifactory-user: ARTIFACTORY_USER_OPENSEARCH
-            artifactory-token: ARTIFACTORY_TOKEN_OPENSEARCH
+            artifactory-url: ARTIFACTORY_DEPLOY_URL
+            artifactory-user: ARTIFACTORY_USER
+            artifactory-token: ARTIFACTORY_TOKEN
             tarball-regex: "opensearch-*.tar.gz"
       
     with:
