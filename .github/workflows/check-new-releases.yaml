@@ -150,13 +150,17 @@ jobs:
       #       --credentials "${{ env.LP_CREDENTIALS }}"
 
       - name: Delete previous release
-        uses: liudonghua123/delete-release-action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: cb80/delrel@latest
         with:
-          release_name: Release ${{ matrix.version }}
-          tag_name: ${{ matrix.version }}
-          suppress_errors: false
+          tag: ${{ matrix.version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+        # uses: liudonghua123/delete-release-action@v1
+        # env:
+        #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # with:
+        #   release_name: Release ${{ matrix.version }}
+        #   tag_name: ${{ matrix.version }}
+        #   suppress_errors: false
       
       - name: Get tarball name
         id: get-tarball-name
@@ -209,14 +213,15 @@ jobs:
           find . -type f -name "*.jar" | awk -F '/' '{print $NF}' > tarball_jars.txt
           cat tarball_jars.txt
           cd ..
+          echo "Number of jars to upload: $( wc -l tmp/tarball_jars.txt )"
           readarray -t jar_files < tmp/tarball_jars.txt
           # loop over the mvn local repository
-          if [ ! -f repository.zip ]
+          if [ ! -f ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/repository.zip ]
           then
             echo "No Jar dependencies found!"
             exit 0
           fi
-          unzip repository.zip
+          unzip ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/repository.zip
           cd repository
           find . -mindepth 3 -maxdepth 10 -type d -ls | awk -F ' ' '{print $11}' > paths.txt
           while read path; do
