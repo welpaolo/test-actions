@@ -121,6 +121,9 @@ jobs:
           echo "lp-branch-prefix: ${{ inputs.lp-branch-prefix }}"
           echo "tarball-regex: ${{ inputs.tarball-regex }}"
           echo "matrix version: ${{ matrix.version }}"
+      
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Download releases
         uses: actions/download-artifact@v3

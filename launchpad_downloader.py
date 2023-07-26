@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from argparse import Namespace
 from dataclasses import dataclass
 from urllib.error import URLError
