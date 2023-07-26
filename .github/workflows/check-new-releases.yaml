@@ -216,6 +216,7 @@ jobs:
             echo "No Jar dependencies found!"
             exit 0
           fi
+          # unzip maven repository
           unzip ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/repository.zip
           cd repository
           find . -mindepth 3 -maxdepth 10 -type d -ls | awk -F ' ' '{print $11}' > paths.txt
@@ -224,25 +225,26 @@ jobs:
             if [ $count != 0 ]
             then 
               echo "Folder anlyzed: $path"
-              jar_file=$( ls "$path"/*.jar | awk -F '/' '{print $NF}')
-              echo "JAR FILE: $jar_file"
-              if [[ " ${jar_files[*]} " =~ " ${jar_file} " ]]; then
-                for file in "$path"/*; do
-                  filename=$(echo "$file" | awk -F '/' '{print $NF}')
-                  repo_path="${file:2}"
-                  echo "repo_path: $repo_path"
-                  folder_structure=${repo_path%"$filename"*}
-                  if [[ $filename != _* ]]
-                  then 
-                    echo "Upload file: $file"
-                    curl -X PUT -u "${{ secrets[inputs.artifactory-user] }}":"${{ secrets[inputs.artifactory-token] }}" -T "$file" "${{ secrets[inputs.artifactory-url] }}${folder_structure}"
-                  else
-                    echo "DO NOT Upload file: $file"
-                  fi
-                done
-              else
-                echo "Jar file not present in the list: $jar_file"
-              fi
+              for jar_file in $( ls "$path"/*.jar | awk -F '/' '{print $NF}'); do 
+                echo "JAR FILE: $jar_file"
+                if [[ " ${jar_files[*]} " =~ " ${jar_file} " ]]; then
+                  for file in "$path"/*; do
+                    filename=$(echo "$file" | awk -F '/' '{print $NF}')
+                    repo_path="${file:2}"
+                    echo "repo_path: $repo_path"
+                    folder_structure=${repo_path%"$filename"*}
+                    if [[ $filename != _* ]]
+                    then 
+                      echo "Upload file: $file"
+                      curl -X PUT -u "${{ secrets[inputs.artifactory-user] }}":"${{ secrets[inputs.artifactory-token] }}" -T "$file" "${{ secrets[inputs.artifactory-url] }}${folder_structure}"
+                    else
+                      echo "DO NOT Upload file: $file"
+                    fi
+                  done
+                else
+                  echo "Jar file not present in the list: $jar_file"
+                fi
+              done
             fi 
           done < paths.txt
       
