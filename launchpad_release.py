@@ -20,10 +20,14 @@ def parse_args() -> Namespace:
     return parser.parse_args()
 
 
-def get_series(lp_project, version: str):
+def get_series(lp_project, version: str, app:str):
     """Fetch the series matching the current version."""
     series_name = ".".join(version.split(".")[:2])
-    return lp_project.getSeries(name=series_name)
+    series = lp_project.getSeries(name=series_name)
+    if series:
+        return series
+    else:
+        return lp_project.newSeries(name=series_name, summary=f"Series {series} for application {app}")
 
 
 def get_milestone(lp_project, lp_series, version: str):
@@ -84,10 +88,11 @@ def main():
 
     # get launchpad client
     launchpad = Launchpad.login_with(args.project, LP_SERVER, credentials_file=args.credentials)
+
     lp_project = launchpad.projects[args.project]
 
     # fetch project series matching with version
-    lp_series = get_series(lp_project, args.version)
+    lp_series = get_series(lp_project, args.version, args.app)
 
     # get milestone or create if not exists
     lp_milestone = get_milestone(lp_project, lp_series, args.version)
