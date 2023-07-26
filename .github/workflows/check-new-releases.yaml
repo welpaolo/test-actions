@@ -130,32 +130,6 @@ jobs:
       - name: List all versions
         run: unzip ${{ env.OUTPUT_DIR }}-${{  inputs.name }}.zip; ls "${{ env.OUTPUT_DIR }}";
 
-      # - name: LP release
-      #   id: create-new-lp-release
-      #   run: |
-      #     ls
-      #     tarball=$(find ./ -maxdepth 1 -mindepth 1 -name "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/*${inputs.name}-*.tar.gz")
-      #     echo "Tarball name: $tarball"
-      #     python3 launchpad_release.py \
-      #       --app "${{ inputs.name }}" \
-      #       --project "${{ inputs.lp-project }}" \
-      #       --version "${{ matrix.version }}" \
-      #       --tarball "${tarball}" \
-      #       --credentials "${{ env.LP_CREDENTIALS }}"
-
-      - name: Delete previous release
-        uses: cb80/delrel@latest
-        with:
-          tag: ${{ matrix.version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-        # uses: liudonghua123/delete-release-action@v1
-        # env:
-        #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # with:
-        #   release_name: Release ${{ matrix.version }}
-        #   tag_name: ${{ matrix.version }}
-        #   suppress_errors: false
-      
       - name: Get tarball name
         id: get-tarball-name
         run: |
@@ -169,6 +143,24 @@ jobs:
           tarball_filename=$(ls ${{ inputs.tarball-regex }})
           echo "Tarball filename: $tarball_filename"
           echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_ENV
+
+      - name: LP release
+        id: create-new-lp-release
+        run: |
+          ls
+          echo "Tarball name: ${{ env.TARBALL_FILENAME }}"
+          python3 launchpad_release.py \
+            --app "${{ inputs.name }}" \
+            --project "${{ inputs.lp-project }}" \
+            --version "${{ matrix.version }}" \
+            --tarball "${{ env.TARBALL_FILENAME }}" \
+            --credentials "${{ env.LP_CREDENTIALS }}"
+
+      - name: Delete previous release
+        uses: cb80/delrel@latest
+        with:
+          tag: ${{ matrix.version }}
+          token: ${{ secrets.GITHUB_TOKEN }}      
 
       - name: Release the package
         id: create-new-release
