@@ -223,9 +223,9 @@ jobs:
             if [ $count != 0 ]
             then 
               echo "Folder anlyzed: $path"
-              jar_file = $( ls "$path"/*.jar | awk -F '/' '{print $NF}')
+              jar_file=$( ls "$path"/*.jar | awk -F '/' '{print $NF}')
               echo "JAR FILE: $jar_file"
-              if [[ " ${jar_files[*]} " =~ " ${value} " ]]; then
+              if [[ " ${jar_files[*]} " =~ " ${jar_file} " ]]; then
                 for file in "$path"/*; do
                   filename=$(echo "$file" | awk -F '/' '{print $NF}')
                   repo_path="${file:2}"
