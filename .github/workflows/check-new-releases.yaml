@@ -175,7 +175,7 @@ jobs:
             --app "${{ inputs.name }}" \
             --project "${{ inputs.lp-project }}" \
             --version "$version" \
-            --tarball "${{ env.TARBALL_FILENAME }}" \
+            --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ env.TARBALL_FILENAME }}" \
             --credentials "${{ env.LP_CREDENTIALS }}"
 
       - name: Delete previous release
