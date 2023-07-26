@@ -207,9 +207,9 @@ jobs:
           mkdir tmp && tar xf ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ env.TARBALL_FILENAME }} -C tmp --strip-components 1
           cd tmp
           find . -type f -name "*.jar" | awk -F '/' '{print $NF}' > tarball_jars.txt
-          cat ../jar-files.txt
+          cat tarball_jars.txt
           cd ..
-          readarray -t jar_files < tmp/jar_files.txt
+          readarray -t jar_files < tmp/tarball_jars.txt
           # loop over the mvn local repository
           if [ ! -f repository.zip ]
           then
@@ -226,7 +226,7 @@ jobs:
               echo "Folder anlyzed: $path"
               jar_file = $( ls *.jar | awk -F '/' '{print $NF}')
               echo "JAR FILE: $jar_file"
-              if [[ " ${array[*]} " =~ " ${value} " ]]; then
+              if [[ " ${jar_files[*]} " =~ " ${value} " ]]; then
                 for file in "$path"/*; do
                   filename=$(echo "$file" | awk -F '/' '{print $NF}')
                   repo_path="${file:2}"
