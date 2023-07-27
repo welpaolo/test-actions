@@ -22,6 +22,9 @@ jobs:
             lp-project: test-spark-build
             lp-repo: ~paolosottovia/test-spark-build/+git/test-spark-build
             lp-branch-prefix: spark-
+            lp-consumer-key: LP_CONSUMER_KEY_SPARK
+            lp-access-token: LP_ACCESS_TOKEN_SPARK
+            lp-access-secret: LP_SECRET_TOKEN_SPARK
             artifactory-url: ARTIFACTORY_DEPLOY_URL
             artifactory-user: ARTIFACTORY_USER
             artifactory-token: ARTIFACTORY_TOKEN
@@ -31,6 +34,9 @@ jobs:
             lp-project: opensearch-lp-build
             lp-repo: ~medib/opensearch-lp-build/+git/opensearch-lp-build
             lp-branch-prefix: lp-
+            lp-consumer-key: LP_CONSUMER_KEY_OPENSEARCH
+            lp-access-token: LP_ACCESS_TOKEN_OPENSEARCH
+            lp-access-secret: LP_SECRET_TOKEN_OPENSEARCH
             artifactory-url: ARTIFACTORY_DEPLOY_URL
             artifactory-user: ARTIFACTORY_USER
             artifactory-token: ARTIFACTORY_TOKEN
@@ -41,6 +47,9 @@ jobs:
       lp-project: ${{ matrix.product.lp-project }}
       lp-repo: ${{ matrix.product.lp-repo }}
       lp-branch-prefix: ${{ matrix.product.lp-branch-prefix }}
+      lp-consumer-key: ${{ matrix.product.lp-consumer-key }}
+      lp-access-token: ${{ matrix.product.lp-access-token }}
+      lp-access-secret: ${{ matrix.product.lp-access-secret }}
       artifactory-url: ${{ matrix.product.artifactory-url }}
       artifactory-user: ${{ matrix.product.artifactory-user }}
       artifactory-token: ${{ matrix.product.artifactory-token }}

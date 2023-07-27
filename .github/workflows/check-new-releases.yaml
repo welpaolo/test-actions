@@ -19,6 +19,18 @@ on:
         required: true
         type: string
         description: The prefix of the LP Git branches producing builds of the Product to be released.
+      lp-consumer-key:
+        required: true
+        type: string
+        description: The consumer key used to authenticate with Launchpad.
+      lp-access-token:
+        required: true
+        type: string
+        description: The access token used to authenticate with Launchpad.
+      lp-access-secret:
+        required: true
+        type: string
+        description: The access secret used to authenticate with Launchpad.
       artifactory-url:
         required: true
         type: string
@@ -44,7 +56,7 @@ jobs:
   download-builds:
     name: Download build products from Launchpad
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -59,9 +71,9 @@ jobs:
 
       - name: Create credentials file
         env:
-          CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}
-          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
+          CONSUMER_KEY: ${{ secrets[inputs.lp-consumer-key] }}
+          ACCESS_TOKEN: ${{ secrets[inputs.lp-access-token] }}
+          ACCESS_SECRET: ${{ secrets[inputs.lp-access-secret] }}
         run: |
           cat <<EOF >> ${{ env.LP_CREDENTIALS }}
           [1]
@@ -146,9 +158,9 @@ jobs:
       
       - name: Create credentials file
         env:
-          CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}
-          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
+          CONSUMER_KEY: ${{ secrets[inputs.lp-consumer-key] }}
+          ACCESS_TOKEN: ${{ secrets[inputs.lp-access-token] }}
+          ACCESS_SECRET: ${{ secrets[inputs.lp-access-secret] }}
         run: |
           cat <<EOF >> ${{ env.LP_CREDENTIALS }}
           [1]
