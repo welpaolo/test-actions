@@ -116,6 +116,7 @@ jobs:
       tarball_name_regex: ${{ inputs.tarball-regex }}
 
   release-artifact:
+    name: Release artifact on LP and Github
     needs: download-builds
     runs-on: ubuntu-latest
     strategy:
@@ -143,7 +144,7 @@ jobs:
       - name: Decompress all versions and list them
         run: unzip ${{ env.OUTPUT_DIR }}-${{  inputs.name }}.zip; ls "${{ env.OUTPUT_DIR }}";
 
-      - name: Get tarball name
+      - name: Get tarball name and software version
         id: get-tarball-name
         run: |
           cd output/${{ matrix.version }}/
@@ -153,8 +154,11 @@ jobs:
             exit 1
           fi
           tarball_filename=$(ls ${{ inputs.tarball-regex }})
-          echo "Tarball filename: $tarball_filename"
           echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_ENV
+          version=$( echo "${{ matrix.version }}" | awk -F '-' '{print $NF}' )
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "Tarball filename: ${{ env.TARBALL_FILENAME}}"
+          echo "Software version: ${{ env.VERSION }}"
       
       - name: Create credentials file
         env:
@@ -176,23 +180,18 @@ jobs:
       - name: LP release of packages
         id: create-new-lp-release
         run: |
-          ls
-          version=$( echo "${{ matrix.version }}" | awk -F '-' '{print $NF}' )
-          echo "Tarball name: ${{ env.TARBALL_FILENAME }} | version: $version"
-          echo "app: ${{ inputs.name }}"
-          echo "version: $version "
-          echo "project: ${{ inputs.lp-project }}"
+          echo "Tarball name: ${{ env.TARBALL_FILENAME }} | version: ${{ env.VERSION }}"
           python3 launchpad_release.py \
             --app "${{ inputs.name }}" \
             --project "${{ inputs.lp-project }}" \
-            --version "$version" \
+            --version "${{ env.VERSION }}" \
             --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ env.TARBALL_FILENAME }}" \
             --credentials ${{ env.LP_CREDENTIALS }}
 
-      - name: Delete previous releases
+      - name: Delete previous release
         uses: cb80/delrel@latest
         with:
-          tag: ${{ matrix.version }}
+          tag: ${{ inputs.name }}-${{ env.VERSION }}
           token: ${{ secrets.GITHUB_TOKEN }}      
 
       - name: Release the package
@@ -201,8 +200,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          release_name: Release ${{ matrix.version }}
-          tag_name: ${{ matrix.version }}
+          release_name: Release ${{ inputs.name }} ${{ env.VERSION }}
+          tag_name: ${{ inputs.name }}-${{ env.VERSION }}
 
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
