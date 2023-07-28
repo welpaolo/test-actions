@@ -101,8 +101,9 @@ jobs:
         run: |
           cd ${{ env.OUTPUT_DIR }};
           for folder in $(ls .); do
+            echo "Folder: $folder"
             version=$( echo "$folder" | awk -F '-' '{print $NF}' )
-            release_name=$( ${{ inputs.name }}-$version )
+            release_name=$( "${{ inputs.name }}-$version" )
             count=$( ls $folder/*.sha512 | wc -l )
             if [ $count != 1 ]; then
               echo "Checksum not present!"
