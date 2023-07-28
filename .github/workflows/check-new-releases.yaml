@@ -147,13 +147,13 @@ jobs:
           fi 
 
       - name: List downloaded builds and compress them
-        run: ls ${{ env.OUTPUT_DIR }}; zip -r ${{ env.OUTPUT_DIR }}-${{  inputs.name }}.zip ${{ env.OUTPUT_DIR }}
+        run: ls ${{ env.OUTPUT_DIR }}; zip -r ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip ${{ env.OUTPUT_DIR }}
 
       - name: Store builds
         uses: actions/upload-artifact@v3
         with:
-          name: releases-${{  inputs.name }}
-          path: ${{ env.OUTPUT_DIR }}-${{  inputs.name }}.zip
+          name: releases-${{ inputs.name }}
+          path: ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip
 
       - name: Generate matrix with all built versions
         id: set-matrix
@@ -188,10 +188,10 @@ jobs:
       - name: Download releases
         uses: actions/download-artifact@v3
         with:
-          name: releases-${{  inputs.name }}
+          name: releases-${{ inputs.name }}
 
       - name: Decompress all versions and list them
-        run: unzip ${{ env.OUTPUT_DIR }}-${{  inputs.name }}.zip; ls "${{ env.OUTPUT_DIR }}";
+        run: unzip ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip; ls "${{ env.OUTPUT_DIR }}";
 
       - name: Get tarball name and software version
         id: get-tarball-name
@@ -241,7 +241,7 @@ jobs:
         uses: cb80/delrel@latest
         with:
           tag: ${{ inputs.name }}-${{ env.VERSION }}
-          token: ${{ secrets.GITHUB_TOKEN }}      
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release the package
         id: create-new-release
@@ -323,5 +323,3 @@ jobs:
             fi 
           done < paths.txt
           echo "Upload of dependencies completed!"
-      
-        
