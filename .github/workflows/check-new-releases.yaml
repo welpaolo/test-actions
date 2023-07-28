@@ -113,13 +113,13 @@ jobs:
             fi 
             checksum_path=$( ls $folder/*.sha512 )
             echo "Checksum file path: $checksum_path"
-            checksum_file_name=$( echo $checksum_path | | awk -F '/' '{print $NF}')
+            checksum_file_name=$( echo $checksum_path | awk -F '/' '{print $NF}')
             echo "Checksum file name: $checksum_file_name"
             # get checksum value
             new_checksum_value=$( cat $checksum_path | awk -F '-' '{print $0}')
             echo "Current checksum value: $new_checksum_value"
             # download 
-            output_file=$(/tmp/$checksum_file_name)
+            output_file="/tmp/$checksum_file_name"
             url=$(https://github.com/welpaolo/test-actions/releases/download/$release_name/$checksum_path)
             echo "Download checksum from $url"
             wget $url -O $output_file
