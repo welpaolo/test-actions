@@ -99,7 +99,7 @@ jobs:
       
       - name: Check for same version
         run: |
-          cd ${{ env.OUTPUT_DIR }}; do
+          cd ${{ env.OUTPUT_DIR }};
           for folder in $(ls .); do
             version=$( echo "$folder" | awk -F '-' '{print $NF}' )
             release_name=$( ${{ inputs.name }}-$version )
