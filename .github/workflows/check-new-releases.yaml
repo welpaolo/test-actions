@@ -98,6 +98,7 @@ jobs:
             --output-folder ${{ env.OUTPUT_DIR }}
       
       - name: Check for same version
+        id: check-release
         run: |
           cd ${{ env.OUTPUT_DIR }};
           for folder in $(ls .); do
@@ -142,29 +143,34 @@ jobs:
           number_of_releases=$( ls . | wc -l )
           echo "Number of remaining releases: $number_of_releases"
           if [ $number_of_releases != 1 ]; then
-              echo "Nothing to update!"
-              exit 0
-          fi 
+            echo "Nothing to update!"
+            exit 0
+          else
+            # set output release to true
+            echo "release-package=true" > $GITHUB_OUT
+          fi
 
       - name: List downloaded builds and compress them
         run: ls ${{ env.OUTPUT_DIR }}; zip -r ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip ${{ env.OUTPUT_DIR }}
 
       - name: Store builds
+        if: ${{ needs.download-builds.outputs.release-package == 'true' }}
         uses: actions/upload-artifact@v3
         with:
           name: releases-${{ inputs.name }}
           path: ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip
 
       - name: Generate matrix with all built versions
+        if: ${{ needs.download-builds.outputs.release-package == 'true' }}
         id: set-matrix
         run: |
-          echo "::set-output name=matrix::$(ls -A1 ${{ env.OUTPUT_DIR }} | jq -R -s -c 'split("\n")[:-1]')"
-          echo "${{ steps.set-matrix.outputs.matrix }}"
+          echo "matrix=$(ls -A1 ${{ env.OUTPUT_DIR }} | jq -R -s -c 'split("\n")[:-1]')" > $GITHUB_OUT
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       tarball_name_regex: ${{ inputs.tarball-regex }}
 
   release-artifact:
+    if: ${{ needs.download-builds.outputs.release-package == 'true' }}
     name: Release artifact on LP and Github
     needs: download-builds
     runs-on: ubuntu-latest
