@@ -120,7 +120,7 @@ jobs:
             echo "Current checksum value: $new_checksum_value"
             # download 
             output_file="/tmp/$checksum_file_name"
-            url=$(https://github.com/welpaolo/test-actions/releases/download/$release_name/$checksum_path)
+            url="https://github.com/welpaolo/test-actions/releases/download/$release_name/$checksum_file_name"
             echo "Download checksum from $url"
             wget $url -O $output_file
             old_checksum_value=$( cat $output_file | awk -F '-' '{print $0}')
