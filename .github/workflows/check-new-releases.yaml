@@ -104,7 +104,7 @@ jobs:
             echo "Folder: $folder"
             version=$( echo "$folder" | awk -F '-' '{print $NF}' )
             echo "Version: $version"
-            release_name=$( "${{ inputs.name }}"-"$version" )
+            release_name="${{ inputs.name }}"-"$version"
             echo "Release name: $release_name"
             count=$( ls $folder/*.sha512 | wc -l )
             if [ $count != 1 ]; then
