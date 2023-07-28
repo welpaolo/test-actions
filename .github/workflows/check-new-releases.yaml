@@ -96,6 +96,45 @@ jobs:
             --branch-prefix ${{ inputs.lp-branch-prefix }} \
             --credential-file ${{ env.LP_CREDENTIALS }} \
             --output-folder ${{ env.OUTPUT_DIR }}
+      
+      - name: Check for same version
+        run: |
+          cd ${{ env.OUTPUT_DIR }}; do
+          for folder in $(ls .); do
+            version=$( echo "$folder" | awk -F '-' '{print $NF}' )
+            release_name=$( ${{ inputs.name }}-$version )
+            count=$( ls $folder/*.sha512 | wc -l )
+            if [ $count != 1 ]; then
+              echo "Checksum not present!"
+              exit 1
+            fi 
+            checksum_file=$( ls $folder/*.sha512 )
+            echo "Checksum file: $checksum_file"
+            # get checksum value
+            new_checksum_value=$( $checksum_file | awk -F '-' '{print $0}')
+            echo "Current checksum value: $new_checksum_value"
+            # download 
+            output_file=$(/tmp/$checksum_file)
+            url=$(https://github.com/welpaolo/test-actions/releases/download/$release_name/$checksum_file)
+            echo "Download checksum from $url"
+            wget $url -O $output_file
+            old_checksum_value=$($checksum_file | awk -F '-' '{print $0}')
+            echo "Old checksum value: $old_checksum_value"
+            if [[ $new_checksum_value = $old_checksum_value ]]
+            then
+              echo "Same checksum, DO NOT UPDATE RELEASE"
+              rm -rf $folder
+            else
+              echo "Different checksum, UPDATE RELEASE"
+            fi
+          done
+
+          number_of_releases=$( ls . | wc -l )
+          echo "Number of remaining releases: $number_of_releases"
+          if [ $number_of_releases != 1 ]; then
+              echo "Nothing to update!"
+              exit 0
+          fi 
 
       - name: List downloaded builds and compress them
         run: ls ${{ env.OUTPUT_DIR }}; zip -r ${{ env.OUTPUT_DIR }}-${{  inputs.name }}.zip ${{ env.OUTPUT_DIR }}
