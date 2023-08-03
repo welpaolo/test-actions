@@ -147,7 +147,7 @@ jobs:
             exit 0
           else
             # set output release to true
-            echo "release-package=true" > $GITHUB_OUT
+            echo "release-package=true" > $GITHUB_OUTPUT
           fi
 
       - name: List downloaded builds and compress them
