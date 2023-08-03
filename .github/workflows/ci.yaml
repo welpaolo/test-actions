@@ -19,9 +19,9 @@ jobs:
       matrix:
         product:
           - name: spark
-            lp-project: test-spark-build
-            lp-repo: ~paolosottovia/test-spark-build/+git/test-spark-build
-            lp-branch-prefix: spark-
+            lp-project: soss
+            lp-repo: ~data-platform/soss/+source/charmed-spark/+git/charmed-spark/
+            lp-branch-prefix: lp-spark-
             lp-consumer-key: LP_CONSUMER_KEY_SPARK
             lp-access-token: LP_ACCESS_TOKEN_SPARK
             lp-access-secret: LP_SECRET_TOKEN_SPARK
