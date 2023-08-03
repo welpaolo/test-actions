@@ -154,23 +154,24 @@ jobs:
         run: ls ${{ env.OUTPUT_DIR }}; zip -r ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip ${{ env.OUTPUT_DIR }}
 
       - name: Store builds
-        if: ${{ needs.download-builds.outputs.release-package == 'true' }}
+        if: ${{ steps.check-release.outputs.release-package == 'true' }}
         uses: actions/upload-artifact@v3
         with:
           name: releases-${{ inputs.name }}
           path: ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip
 
       - name: Generate matrix with all built versions
-        if: ${{ needs.download-builds.outputs.release-package == 'true' }}
+        if: ${{ steps.check-release.outputs.release-package == 'true' }}
         id: set-matrix
         run: |
-          echo "matrix=$(ls -A1 ${{ env.OUTPUT_DIR }} | jq -R -s -c 'split("\n")[:-1]')" > $GITHUB_OUT
+          echo "matrix=$(ls -A1 ${{ env.OUTPUT_DIR }} | jq -R -s -c 'split("\n")[:-1]')" > $GITHUB_OUTPUT
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       tarball_name_regex: ${{ inputs.tarball-regex }}
+      release: ${{ steps.check-release.outputs.release-package }}
 
   release-artifact:
-    if: ${{ needs.download-builds.outputs.release-package == 'true' }}
+    if: ${{ needs.download-builds.outputs.release == 'true' }}
     name: Release artifact on LP and Github
     needs: download-builds
     runs-on: ubuntu-latest
