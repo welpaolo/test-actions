@@ -237,7 +237,7 @@ jobs:
         id: create-new-lp-release
         run: |
           echo "Tarball name: ${{ env.TARBALL_FILENAME }} | version: ${{ env.VERSION }}"
-          if [[ "${{ inputs.lp-repo }}" != "*/soss/*" ]]; then
+          if [[ "${{ inputs.lp-repo }}" != *"/soss/"* ]]; then
             python3 launchpad_release.py \
               --app "${{ inputs.name }}" \
               --project "${{ inputs.lp-project }}" \
