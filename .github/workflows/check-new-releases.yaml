@@ -237,13 +237,16 @@ jobs:
         id: create-new-lp-release
         run: |
           echo "Tarball name: ${{ env.TARBALL_FILENAME }} | version: ${{ env.VERSION }}"
-          python3 launchpad_release.py \
-            --app "${{ inputs.name }}" \
-            --project "${{ inputs.lp-project }}" \
-            --version "${{ env.VERSION }}" \
-            --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ env.TARBALL_FILENAME }}" \
-            --credentials ${{ env.LP_CREDENTIALS }}
-
+          if [[ "${{ inputs.lp-repo }}"" != "*/soss/*" ]]; then
+            python3 launchpad_release.py \
+              --app "${{ inputs.name }}" \
+              --project "${{ inputs.lp-project }}" \
+              --version "${{ env.VERSION }}" \
+              --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ env.TARBALL_FILENAME }}" \
+              --credentials ${{ env.LP_CREDENTIALS }}
+          else
+            echo "Do not upload any artifacts for repo: ${{ inputs.lp-repo }}"
+          fi
       - name: Delete previous release
         uses: cb80/delrel@latest
         with:
