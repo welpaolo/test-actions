@@ -1,0 +1,30 @@
+{
+    "product":[
+        {
+            "name": "spark",
+            "lp-project": "soss",
+            "lp-repo": "~data-platform/soss/+source/charmed-spark/+git/charmed-spark/",
+            "lp-branch-prefix": "lp-spark-",
+            "lp-consumer-key": "LP_CONSUMER_KEY_SPARK",
+            "lp-access-token": "LP_ACCESS_TOKEN_SPARK",
+            "lp-access-secret": "LP_SECRET_TOKEN_SPARK",
+            "artifactory-url": "ARTIFACTORY_DEPLOY_URL",
+            "artifactory-user": "ARTIFACTORY_USER",
+            "artifactory-token": "ARTIFACTORY_TOKEN",
+            "tarball-regex": "spark-*.tgz"
+        },
+        {
+            "name": "opensearch",
+            "lp-project": "opensearch-lp-build",
+            "lp-repo": "~medib/opensearch-lp-build/+git/opensearch-lp-build",
+            "lp-branch-prefix": "lp-",
+            "lp-consumer-key": "LP_CONSUMER_KEY_OPENSEARCH",
+            "lp-access-token": "LP_ACCESS_TOKEN_OPENSEARCH",
+            "lp-access-secret": "LP_SECRET_TOKEN_OPENSEARCH",
+            "artifactory-url": "ARTIFACTORY_DEPLOY_URL",
+            "artifactory-user": "ARTIFACTORY_USER",
+            "artifactory-token": "ARTIFACTORY_TOKEN",
+            "tarball-regex": "opensearch-*.tar.gz"
+        }
+    ]
+}

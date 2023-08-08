@@ -11,36 +11,53 @@ on:
   workflow_call:
 
 jobs:
+  setup-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Create matrix
+        id: set-matrix
+        run: |
+          cat products.json
+          echo "matrix=$(cat products.json)" > $GITHUB_OUTPUT
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }} 
+
   release-products:
     secrets: inherit
     uses: ./.github/workflows/check-new-releases.yaml
+    needs: setup-matrix
     strategy:
       fail-fast: false
-      matrix:
-        product:
-          - name: spark
-            lp-project: soss
-            lp-repo: ~data-platform/soss/+source/charmed-spark/+git/charmed-spark/
-            lp-branch-prefix: lp-spark-
-            lp-consumer-key: LP_CONSUMER_KEY_SPARK
-            lp-access-token: LP_ACCESS_TOKEN_SPARK
-            lp-access-secret: LP_SECRET_TOKEN_SPARK
-            artifactory-url: ARTIFACTORY_DEPLOY_URL
-            artifactory-user: ARTIFACTORY_USER
-            artifactory-token: ARTIFACTORY_TOKEN
-            tarball-regex: "spark-*.tgz"
+      matrix: 
+        product: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+      # matrix:
+      #   product:
+      #     - name: spark
+      #       lp-project: soss
+      #       lp-repo: ~data-platform/soss/+source/charmed-spark/+git/charmed-spark/
+      #       lp-branch-prefix: lp-spark-
+      #       lp-consumer-key: LP_CONSUMER_KEY_SPARK
+      #       lp-access-token: LP_ACCESS_TOKEN_SPARK
+      #       lp-access-secret: LP_SECRET_TOKEN_SPARK
+      #       artifactory-url: ARTIFACTORY_DEPLOY_URL
+      #       artifactory-user: ARTIFACTORY_USER
+      #       artifactory-token: ARTIFACTORY_TOKEN
+      #       tarball-regex: "spark-*.tgz"
 
-          - name: opensearch
-            lp-project: opensearch-lp-build
-            lp-repo: ~medib/opensearch-lp-build/+git/opensearch-lp-build
-            lp-branch-prefix: lp-
-            lp-consumer-key: LP_CONSUMER_KEY_OPENSEARCH
-            lp-access-token: LP_ACCESS_TOKEN_OPENSEARCH
-            lp-access-secret: LP_SECRET_TOKEN_OPENSEARCH
-            artifactory-url: ARTIFACTORY_DEPLOY_URL
-            artifactory-user: ARTIFACTORY_USER
-            artifactory-token: ARTIFACTORY_TOKEN
-            tarball-regex: "opensearch-*.tar.gz"
+      #     - name: opensearch
+      #       lp-project: opensearch-lp-build
+      #       lp-repo: ~medib/opensearch-lp-build/+git/opensearch-lp-build
+      #       lp-branch-prefix: lp-
+      #       lp-consumer-key: LP_CONSUMER_KEY_OPENSEARCH
+      #       lp-access-token: LP_ACCESS_TOKEN_OPENSEARCH
+      #       lp-access-secret: LP_SECRET_TOKEN_OPENSEARCH
+      #       artifactory-url: ARTIFACTORY_DEPLOY_URL
+      #       artifactory-user: ARTIFACTORY_USER
+      #       artifactory-token: ARTIFACTORY_TOKEN
+      #       tarball-regex: "opensearch-*.tar.gz"
       
     with:
       name: ${{ matrix.product.name }}
