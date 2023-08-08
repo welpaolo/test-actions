@@ -21,7 +21,7 @@ jobs:
         id: set-matrix
         run: |
           cat products.json
-          echo "matrix=$(cat products.json | jq -s -c)" > $GITHUB_OUTPUT
+          echo "matrix=$(cat products.json | jq -c)" > $GITHUB_OUTPUT
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }} 
 
