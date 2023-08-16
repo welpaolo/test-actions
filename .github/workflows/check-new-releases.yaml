@@ -7,15 +7,19 @@ on:
         required: true
         type: string
         description: The name of the product to be released.
-      lp-project:
+      lp-building-project:
+        required: true
+        type: string
+        description: The LP build project of the building project.
+      lp-releasing-project:
         required: true
         type: string
         description: The LP build project for the product to be released.
-      lp-repo:
+      lp-building-repo:
         required: true
         type: string
         description: The relative path to the LP git repo of the Product to be released.
-      lp-branch-prefix:
+      lp-building-branch-prefix:
         required: true
         type: string
         description: The prefix of the LP Git branches producing builds of the Product to be released.
@@ -64,9 +68,10 @@ jobs:
       - name: Print passed vars
         run: |
           echo "name: ${{ inputs.name }}"
-          echo "lp-project: ${{ inputs.lp-project }}"
-          echo "lp-repo: ${{ inputs.lp-repo }}"
-          echo "lp-branch-prefix: ${{ inputs.lp-branch-prefix }}"
+          echo "lp-building-project: ${{ inputs.lp-building-project }}"
+          echo "lp-releasing-project: ${{ inputs.lp-releasing-project }}"
+          echo "lp-building-repo: ${{ inputs.lp-building-repo }}"
+          echo "lp-building-branch-prefix: ${{ inputs.lp-building-branch-prefix }}"
           echo "tarball-regex: ${{ inputs.tarball-regex }}"
 
       - name: Create credentials file
@@ -92,8 +97,8 @@ jobs:
       - name: Run download script from LP
         run: |
           python3 launchpad_downloader.py \
-            --repository-url ${{ inputs.lp-repo }} \
-            --branch-prefix ${{ inputs.lp-branch-prefix }} \
+            --repository-url ${{ inputs.lp-building-repo }} \
+            --branch-prefix ${{ inputs.lp-building-branch-prefix }} \
             --credential-file ${{ env.LP_CREDENTIALS }} \
             --output-folder ${{ env.OUTPUT_DIR }}
       
@@ -121,9 +126,9 @@ jobs:
             echo "Current checksum value: $new_checksum_value"
             # download 
             output_file="/tmp/$checksum_file_name"
-            url="https://github.com/welpaolo/test-actions/releases/download/$release_name/$checksum_file_name"
+            url="${{ github.server_url }}/${{ github.repository }}/releases/download/$release_name/$checksum_file_name"
             http_code=$(curl -Is $url | head -1 | awk -F ' ' '{print $2}')
-            if [ $http_code != "404" ]; then
+            if [ $http_code = "200" ]; then
               echo "Download checksum from $url"
               wget $url -O $output_file
               old_checksum_value=$( cat $output_file | awk -F ' ' '{print $1}')
@@ -144,6 +149,7 @@ jobs:
           echo "Number of remaining releases: $number_of_releases"
           if [ $number_of_releases != 1 ]; then
             echo "Nothing to update!"
+            echo "release-package=false" > $GITHUB_OUTPUT
             exit 0
           else
             # set output release to true
@@ -167,7 +173,6 @@ jobs:
           echo "matrix=$(ls -A1 ${{ env.OUTPUT_DIR }} | jq -R -s -c 'split("\n")[:-1]')" > $GITHUB_OUTPUT
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-      tarball_name_regex: ${{ inputs.tarball-regex }}
       release: ${{ steps.check-release.outputs.release-package }}
 
   release-artifact:
@@ -179,16 +184,7 @@ jobs:
       fail-fast: false
       matrix:
         version: ${{ fromJson(needs.download-builds.outputs.matrix) }}
-    steps:
-      - name: Print passed vars
-        run: |
-          echo "name: ${{ inputs.name }}"
-          echo "lp-project: ${{ inputs.lp-project }}"
-          echo "lp-repo: ${{ inputs.lp-repo }}"
-          echo "lp-branch-prefix: ${{ inputs.lp-branch-prefix }}"
-          echo "tarball-regex: ${{ inputs.tarball-regex }}"
-          echo "matrix version: ${{ matrix.version }}"
-      
+    steps:      
       - name: Checkout
         uses: actions/checkout@v3
 
@@ -210,11 +206,11 @@ jobs:
             exit 1
           fi
           tarball_filename=$(ls ${{ inputs.tarball-regex }})
-          echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_ENV
+          echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_OUTPUT
           version=$( echo "${{ matrix.version }}" | awk -F '-' '{print $NF}' )
-          echo "VERSION=$version" >> $GITHUB_ENV
-          echo "Tarball filename: ${{ env.TARBALL_FILENAME}}"
-          echo "Software version: ${{ env.VERSION }}"
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
+          echo "Tarball filename: ${{ tarball_filename}}"
+          echo "Software version: ${{ version }}"
       
       - name: Create credentials file
         env:
@@ -236,16 +232,15 @@ jobs:
       - name: LP release of packages
         id: create-new-lp-release
         run: |
-          echo "Tarball name: ${{ env.TARBALL_FILENAME }} | version: ${{ env.VERSION }}"
-          if [[ "${{ inputs.lp-repo }}" != *"/soss/"* ]]; then
+          echo "Tarball name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }} | version: ${{ steps.get-tarball-name.outputs.VERSION }}"
             python3 launchpad_release.py \
               --app "${{ inputs.name }}" \
-              --project "${{ inputs.lp-project }}" \
-              --version "${{ env.VERSION }}" \
-              --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ env.TARBALL_FILENAME }}" \
+              --project "${{ inputs.lp-releasing-project }}" \
+              --version "${{ steps.get-tarball-name.outputs.VERSION }}" \
+              --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}" \
               --credentials ${{ env.LP_CREDENTIALS }}
           else
-            echo "Do not upload any artifacts for repo: ${{ inputs.lp-repo }}"
+            echo "Do not upload any artifacts for project: ${{ inputs.lp-releasing-project }}"
           fi
       - name: Delete previous release
         uses: cb80/delrel@latest
@@ -268,8 +263,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-new-release.outputs.upload_url }}
-          asset_path: ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ env.TARBALL_FILENAME }}
-          asset_name: ${{ env.TARBALL_FILENAME }}
+          asset_path: ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
+          asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
           asset_content_type: application/zip
 
       - name: Upload checksum
@@ -278,14 +273,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-new-release.outputs.upload_url }}
-          asset_path: output/${{ matrix.version }}/${{ env.TARBALL_FILENAME }}.sha512
-          asset_name: ${{ env.TARBALL_FILENAME }}.sha512
+          asset_path: output/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
+          asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
           asset_content_type: application/txt
 
       - name: Upload Java dependencies to artifactory
         run: |
           # unpack tarball content in a temporary directory
-          mkdir tmp && tar xf ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ env.TARBALL_FILENAME }} -C tmp --strip-components 1
+          mkdir tmp && tar xf ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }} -C tmp --strip-components 1
           cd tmp
           # get all jar files present in the tarball 
           find . -type f -name "*.jar" | awk -F '/' '{print $NF}' > tarball_jars.txt

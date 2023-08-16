@@ -1,9 +1,10 @@
 [
     {
         "name": "spark",
-        "lp-project": "soss",
-        "lp-repo": "~data-platform/soss/+source/charmed-spark/+git/charmed-spark/",
-        "lp-branch-prefix": "lp-spark-",
+        "lp-building-project": "soss",
+        "lp-releasing-project": "soss",
+        "lp-building-repo": "~data-platform/soss/+source/charmed-spark/+git/charmed-spark/",
+        "lp-building-branch-prefix": "lp-spark-",
         "lp-consumer-key": "LP_CONSUMER_KEY_SPARK",
         "lp-access-token": "LP_ACCESS_TOKEN_SPARK",
         "lp-access-secret": "LP_SECRET_TOKEN_SPARK",
@@ -14,9 +15,10 @@
     },
     {
         "name": "opensearch",
-        "lp-project": "opensearch-lp-build",
-        "lp-repo": "~medib/opensearch-lp-build/+git/opensearch-lp-build",
-        "lp-branch-prefix": "lp-",
+        "lp-building-project": "opensearch-lp-build",
+        "lp-releasing-project": "soss",
+        "lp-building-repo": "~medib/opensearch-lp-build/+git/opensearch-lp-build",
+        "lp-building-branch-prefix": "lp-",
         "lp-consumer-key": "LP_CONSUMER_KEY_OPENSEARCH",
         "lp-access-token": "LP_ACCESS_TOKEN_OPENSEARCH",
         "lp-access-secret": "LP_SECRET_TOKEN_OPENSEARCH",

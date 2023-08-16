@@ -36,9 +36,10 @@ jobs:
               
     with:
       name: ${{ matrix.product.name }}
-      lp-project: ${{ matrix.product.lp-project }}
-      lp-repo: ${{ matrix.product.lp-repo }}
-      lp-branch-prefix: ${{ matrix.product.lp-branch-prefix }}
+      lp-building-project: ${{ matrix.product.lp-project }}
+      lp-releasing-project: ${{ matrix.product.lp-release-repo }}
+      lp-building-repo: ${{ matrix.product.lp-repo }}
+      lp-building-branch-prefix: ${{ matrix.product.lp-branch-prefix }}
       lp-consumer-key: ${{ matrix.product.lp-consumer-key }}
       lp-access-token: ${{ matrix.product.lp-access-token }}
       lp-access-secret: ${{ matrix.product.lp-access-secret }}
