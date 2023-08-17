@@ -16,7 +16,7 @@
     {
         "name": "opensearch",
         "lp-building-project": "opensearch-lp-build",
-        "lp-releasing-project": "soss",
+        "lp-releasing-project": "opensearch-releases",
         "lp-building-repo": "~medib/opensearch-lp-build/+git/opensearch-lp-build",
         "lp-building-branch-prefix": "lp-",
         "lp-consumer-key": "LP_CONSUMER_KEY_OPENSEARCH",

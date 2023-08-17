@@ -22,6 +22,7 @@ def parse_args() -> Namespace:
 
 def get_series(lp_project, version: str, app:str):
     """Fetch the series matching the current version."""
+    print(f"lp_project {lp_project} lp_project_type: {type(lp_project)}" )
     series_name = ".".join(version.split(".")[:2])
     series = lp_project.getSeries(name=series_name)
     if series:
@@ -32,6 +33,8 @@ def get_series(lp_project, version: str, app:str):
 
 def get_milestone(lp_project, lp_series, version: str):
     """Fetch the milestone matching this version or create one if not exists."""
+    print(f"lp_project {lp_project} lp_project_type: {type(lp_project)}" )
+    print(f"lp_series {lp_series} lp_series_type: {type(lp_series)}" )
     milestones = [milestone.name for milestone in lp_series.all_milestones]
     if version in milestones:
         return lp_project.getMilestone(name=version)
@@ -41,6 +44,9 @@ def get_milestone(lp_project, lp_series, version: str):
 
 def get_release(lp_project, lp_series, lp_milestone, tarball_path: str, version: str):
     """Get release or create one if not exists."""
+    print(f"lp_project {lp_project} lp_project_type: {type(lp_project)}" )
+    print(f"lp_series {lp_series} lp_series_type: {type(lp_series)}" )
+    print(f"lp_milestone {lp_milestone} lp_milestone_type: {type(lp_milestone)}" )
     releases = [release.version for release in lp_series.releases]
     if version not in releases:
         return lp_milestone.createProductRelease(
@@ -90,6 +96,8 @@ def main():
     launchpad = Launchpad.login_with(args.project, LP_SERVER, credentials_file=args.credentials)
 
     lp_project = launchpad.projects[args.project]
+    
+    # check if project is private stop HERE
 
     # fetch project series matching with version
     lp_series = get_series(lp_project, args.version, args.app)
