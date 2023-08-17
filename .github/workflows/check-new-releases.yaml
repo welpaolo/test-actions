@@ -233,15 +233,12 @@ jobs:
         id: create-new-lp-release
         run: |
           echo "Tarball name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }} | version: ${{ steps.get-tarball-name.outputs.VERSION }}"
-            python3 launchpad_release.py \
-              --app "${{ inputs.name }}" \
-              --project "${{ inputs.lp-releasing-project }}" \
-              --version "${{ steps.get-tarball-name.outputs.VERSION }}" \
-              --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}" \
-              --credentials ${{ env.LP_CREDENTIALS }}
-          else
-            echo "Do not upload any artifacts for project: ${{ inputs.lp-releasing-project }}"
-          fi
+          python3 launchpad_release.py \
+            --app "${{ inputs.name }}" \
+            --project "${{ inputs.lp-releasing-project }}" \
+            --version "${{ steps.get-tarball-name.outputs.VERSION }}" \
+            --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}" \
+            --credentials ${{ env.LP_CREDENTIALS }}
       - name: Delete previous release
         uses: cb80/delrel@latest
         with:

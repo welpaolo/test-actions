@@ -4,8 +4,10 @@ from datetime import datetime
 from launchpadlib.errors import HTTPError
 from launchpadlib.launchpad import Launchpad
 from pathlib import Path
+from lazr.restfulclient.resource import Entry
+import logging
 
-
+logger=logging.getLogger(__name__)
 LP_SERVER = "production"
 
 
@@ -20,9 +22,8 @@ def parse_args() -> Namespace:
     return parser.parse_args()
 
 
-def get_series(lp_project, version: str, app:str):
+def get_series(lp_project: Entry, version: str, app:str):
     """Fetch the series matching the current version."""
-    print(f"lp_project {lp_project} lp_project_type: {type(lp_project)}" )
     series_name = ".".join(version.split(".")[:2])
     series = lp_project.getSeries(name=series_name)
     if series:
@@ -31,10 +32,8 @@ def get_series(lp_project, version: str, app:str):
         return lp_project.newSeries(name=series_name, summary=f"Series {series} for application {app}")
 
 
-def get_milestone(lp_project, lp_series, version: str):
+def get_milestone(lp_project: Entry, lp_series: Entry, version: str):
     """Fetch the milestone matching this version or create one if not exists."""
-    print(f"lp_project {lp_project} lp_project_type: {type(lp_project)}" )
-    print(f"lp_series {lp_series} lp_series_type: {type(lp_series)}" )
     milestones = [milestone.name for milestone in lp_series.all_milestones]
     if version in milestones:
         return lp_project.getMilestone(name=version)
@@ -42,11 +41,8 @@ def get_milestone(lp_project, lp_series, version: str):
     return lp_series.newMilestone(name=version)
 
 
-def get_release(lp_project, lp_series, lp_milestone, tarball_path: str, version: str):
+def get_release(lp_project: Entry, lp_series: Entry, lp_milestone: Entry, tarball_path: str, version: str):
     """Get release or create one if not exists."""
-    print(f"lp_project {lp_project} lp_project_type: {type(lp_project)}" )
-    print(f"lp_series {lp_series} lp_series_type: {type(lp_series)}" )
-    print(f"lp_milestone {lp_milestone} lp_milestone_type: {type(lp_milestone)}" )
     releases = [release.version for release in lp_series.releases]
     if version not in releases:
         return lp_milestone.createProductRelease(
@@ -97,6 +93,10 @@ def main():
 
     lp_project = launchpad.projects[args.project]
     
+    print(lp_project.private)
+    if lp_project.private:
+        logger.info(f"Project {lp_project} is PRIVATE. No release can be done!")
+        exit(0)
     # check if project is private stop HERE
 
     # fetch project series matching with version

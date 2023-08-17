@@ -11,12 +11,14 @@ import collections
 import httplib2
 import os
 import urllib.request
+import logging
 
 
 LP_APP = "data-platform-java-build-app"
 LP_SERVER = "production"
 LP_VERSION = "devel"
 
+logger = logging.getLogger(__name__)
 
 @dataclass
 class CIBuild:
@@ -33,12 +35,12 @@ def _get_tokenized_librarian_url(lp: Launchpad, file_url: str) -> str:
     """Use OAuth to get a tokenised URL for private downloads"""
     # rewrote url
     rewritten_url = file_url.replace("code.launchpad.net/", "api.launchpad.net/devel/")
-    print("Rewrote {} to {} for OAuth access...".format(file_url, rewritten_url))
-    print("Using OAuth'd client to get launchpad.net URL with token...")
+    logger.debug("Rewrote {} to {} for OAuth access...".format(file_url, rewritten_url))
+    logger.debug("Using OAuth'd client to get launchpad.net URL with token...")
     try:
         ret = lp._browser._connection.request(rewritten_url, redirections=0)
         # Print the response to assist debugging failures
-        print(ret)
+        logger.debug(ret)
         assert False, "No redirect to download from, we can't proceed"
     except httplib2.RedirectLimit as e:
         return e.response["location"]  # type: str
@@ -112,7 +114,7 @@ def get_build_runs_by_branch(branches: Dict[str, List[Any]]):
 
     # iterate over builds
     for branch, ci_runs in branches.items():
-        print(f"Checking builds for branch: {branch}")
+        logger.info(f"Checking builds for branch: {branch}")
         if branch not in branch_builds:
             branch_builds[branch] = []
 
