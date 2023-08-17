@@ -209,8 +209,8 @@ jobs:
           echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_OUTPUT
           version=$( echo "${{ matrix.version }}" | awk -F '-' '{print $NF}' )
           echo "VERSION=$version" >> $GITHUB_OUTPUT
-          echo "Tarball filename: ${{ tarball_filename}}"
-          echo "Software version: ${{ version }}"
+          echo "Tarball filename: $tarball_filename"
+          echo "Software version: $version"
       
       - name: Create credentials file
         env:
