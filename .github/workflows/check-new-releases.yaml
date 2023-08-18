@@ -96,7 +96,7 @@ jobs:
 
       - name: Run download script from LP
         run: |
-          python3 launchpad_downloader.py \
+          python3 uploader/launchpad_downloader.py \
             --repository-url ${{ inputs.lp-building-repo }} \
             --branch-prefix ${{ inputs.lp-building-branch-prefix }} \
             --credential-file ${{ env.LP_CREDENTIALS }} \
@@ -233,7 +233,7 @@ jobs:
         id: create-new-lp-release
         run: |
           echo "Tarball name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }} | version: ${{ steps.get-tarball-name.outputs.VERSION }}"
-          python3 launchpad_release.py \
+          python3 uploader/launchpad_release.py \
             --app "${{ inputs.name }}" \
             --project "${{ inputs.lp-releasing-project }}" \
             --version "${{ steps.get-tarball-name.outputs.VERSION }}" \
