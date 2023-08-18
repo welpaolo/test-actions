@@ -1,0 +1,327 @@
+name: Check new builds and release them
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        required: true
+        type: string
+        description: The name of the product to be released.
+      lp-building-project:
+        required: true
+        type: string
+        description: The LP build project of the building project.
+      lp-releasing-project:
+        required: true
+        type: string
+        description: The LP build project for the product to be released.
+      lp-building-repo:
+        required: true
+        type: string
+        description: The relative path to the LP git repo of the Product to be released.
+      lp-building-branch-prefix:
+        required: true
+        type: string
+        description: The prefix of the LP Git branches producing builds of the Product to be released.
+      lp-consumer-key:
+        required: true
+        type: string
+        description: The consumer key used to authenticate with Launchpad.
+      lp-access-token:
+        required: true
+        type: string
+        description: The access token used to authenticate with Launchpad.
+      lp-access-secret:
+        required: true
+        type: string
+        description: The access secret used to authenticate with Launchpad.
+      artifactory-url:
+        required: true
+        type: string
+        description: The url of the artifactor where the jars will be uploaded.
+      artifactory-user:
+        required: true
+        type: string
+        description: The username of the artifactory repository.
+      artifactory-token:
+        required: true
+        type: string
+        description: The authentication token of the artifactory.
+      tarball-regex:
+        required: true
+        type: string
+        description: The regular expression to extract name of the tarball.
+
+env:
+  LP_CREDENTIALS: credentials.txt
+  OUTPUT_DIR: output
+
+jobs:
+  download-builds:
+    name: Download build products from Launchpad
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Print passed vars
+        run: |
+          echo "name: ${{ inputs.name }}"
+          echo "lp-building-project: ${{ inputs.lp-building-project }}"
+          echo "lp-releasing-project: ${{ inputs.lp-releasing-project }}"
+          echo "lp-building-repo: ${{ inputs.lp-building-repo }}"
+          echo "lp-building-branch-prefix: ${{ inputs.lp-building-branch-prefix }}"
+          echo "tarball-regex: ${{ inputs.tarball-regex }}"
+
+      - name: Create credentials file
+        env:
+          CONSUMER_KEY: ${{ secrets[inputs.lp-consumer-key] }}
+          ACCESS_TOKEN: ${{ secrets[inputs.lp-access-token] }}
+          ACCESS_SECRET: ${{ secrets[inputs.lp-access-secret] }}
+        run: |
+          cat <<EOF >> ${{ env.LP_CREDENTIALS }}
+          [1]
+          consumer_key = ${CONSUMER_KEY}
+          consumer_secret = 
+          access_token = ${ACCESS_TOKEN}
+          access_secret = ${ACCESS_SECRET}
+          EOF
+
+      - name: Install Python dependencies for Launchpadapi lib
+        run: pip install -r requirements.txt
+
+      - name: Create folder for storing the downloaded artifacts
+        run: mkdir "${{ env.OUTPUT_DIR }}"
+
+      - name: Run download script from LP
+        run: |
+          python3 launchpad_downloader.py \
+            --repository-url ${{ inputs.lp-building-repo }} \
+            --branch-prefix ${{ inputs.lp-building-branch-prefix }} \
+            --credential-file ${{ env.LP_CREDENTIALS }} \
+            --output-folder ${{ env.OUTPUT_DIR }}
+      
+      - name: Check for same version
+        id: check-release
+        run: |
+          cd ${{ env.OUTPUT_DIR }};
+          for folder in $(ls .); do
+            echo "Folder: $folder"
+            version=$( echo "$folder" | awk -F '-' '{print $NF}' )
+            echo "Version: $version"
+            release_name="${{ inputs.name }}"-"$version"
+            echo "Release name: $release_name"
+            count=$( ls $folder/*.sha512 | wc -l )
+            if [ $count != 1 ]; then
+              echo "Checksum not present!"
+              exit 1
+            fi 
+            checksum_path=$( ls $folder/*.sha512 )
+            echo "Checksum file path: $checksum_path"
+            checksum_file_name=$( echo $checksum_path | awk -F '/' '{print $NF}')
+            echo "Checksum file name: $checksum_file_name"
+            # get checksum value
+            new_checksum_value=$( cat $checksum_path | awk -F ' ' '{print $1}')
+            echo "Current checksum value: $new_checksum_value"
+            # download 
+            output_file="/tmp/$checksum_file_name"
+            url="${{ github.server_url }}/${{ github.repository }}/releases/download/$release_name/$checksum_file_name"
+            http_code=$(curl -Is $url | head -1 | awk -F ' ' '{print $2}')
+            if [ $http_code = "200" ]; then
+              echo "Download checksum from $url"
+              wget $url -O $output_file
+              old_checksum_value=$( cat $output_file | awk -F ' ' '{print $1}')
+              echo "Old checksum value: $old_checksum_value"
+              if [[ $new_checksum_value = $old_checksum_value ]]
+              then
+                echo "Same checksum, DO NOT UPDATE RELEASE"
+                rm -rf $folder
+              else
+                echo "Different checksum, UPDATE RELEASE"
+              fi
+            else
+              echo "No release available for item: $release_name"
+            fi
+          done
+
+          number_of_releases=$( ls . | wc -l )
+          echo "Number of remaining releases: $number_of_releases"
+          if [ $number_of_releases != 1 ]; then
+            echo "Nothing to update!"
+            echo "release-package=false" > $GITHUB_OUTPUT
+            exit 0
+          else
+            # set output release to true
+            echo "release-package=true" > $GITHUB_OUTPUT
+          fi
+
+      - name: List downloaded builds and compress them
+        run: ls ${{ env.OUTPUT_DIR }}; zip -r ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip ${{ env.OUTPUT_DIR }}
+
+      - name: Store builds
+        if: ${{ steps.check-release.outputs.release-package == 'true' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: releases-${{ inputs.name }}
+          path: ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip
+
+      - name: Generate matrix with all built versions
+        if: ${{ steps.check-release.outputs.release-package == 'true' }}
+        id: set-matrix
+        run: |
+          echo "matrix=$(ls -A1 ${{ env.OUTPUT_DIR }} | jq -R -s -c 'split("\n")[:-1]')" > $GITHUB_OUTPUT
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      release: ${{ steps.check-release.outputs.release-package }}
+
+  release-artifact:
+    if: ${{ needs.download-builds.outputs.release == 'true' }}
+    name: Release artifact on LP and Github
+    needs: download-builds
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{ fromJson(needs.download-builds.outputs.matrix) }}
+    steps:      
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download releases
+        uses: actions/download-artifact@v3
+        with:
+          name: releases-${{ inputs.name }}
+
+      - name: Decompress all versions and list them
+        run: unzip ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip; ls "${{ env.OUTPUT_DIR }}";
+
+      - name: Get tarball name and software version
+        id: get-tarball-name
+        run: |
+          cd output/${{ matrix.version }}/
+          count=$( ls ${{ inputs.tarball-regex }} | wc -l )
+          if [ $count != 1 ]; then
+            echo "Tarball file not found with regex: ${{ inputs.tarball-regex }}"
+            exit 1
+          fi
+          tarball_filename=$(ls ${{ inputs.tarball-regex }})
+          echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_OUTPUT
+          version=$( echo "${{ matrix.version }}" | awk -F '-' '{print $NF}' )
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
+          echo "Tarball filename: $tarball_filename"
+          echo "Software version: $version"
+      
+      - name: Create credentials file
+        env:
+          CONSUMER_KEY: ${{ secrets[inputs.lp-consumer-key] }}
+          ACCESS_TOKEN: ${{ secrets[inputs.lp-access-token] }}
+          ACCESS_SECRET: ${{ secrets[inputs.lp-access-secret] }}
+        run: |
+          cat <<EOF >> ${{ env.LP_CREDENTIALS }}
+          [1]
+          consumer_key = ${CONSUMER_KEY}
+          consumer_secret = 
+          access_token = ${ACCESS_TOKEN}
+          access_secret = ${ACCESS_SECRET}
+          EOF
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: LP release of packages
+        id: create-new-lp-release
+        run: |
+          echo "Tarball name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }} | version: ${{ steps.get-tarball-name.outputs.VERSION }}"
+          python3 launchpad_release.py \
+            --app "${{ inputs.name }}" \
+            --project "${{ inputs.lp-releasing-project }}" \
+            --version "${{ steps.get-tarball-name.outputs.VERSION }}" \
+            --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}" \
+            --credentials ${{ env.LP_CREDENTIALS }}
+      - name: Delete previous release
+        uses: cb80/delrel@latest
+        with:
+          tag: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.VERSION }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release the package
+        id: create-new-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_name: Release ${{ inputs.name }} ${{ steps.get-tarball-name.outputs.VERSION }}
+          tag_name: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.VERSION }}
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-new-release.outputs.upload_url }}
+          asset_path: ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
+          asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
+          asset_content_type: application/zip
+
+      - name: Upload checksum
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-new-release.outputs.upload_url }}
+          asset_path: output/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
+          asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
+          asset_content_type: application/txt
+
+      - name: Upload Java dependencies to artifactory
+        run: |
+          # unpack tarball content in a temporary directory
+          mkdir tmp && tar xf ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }} -C tmp --strip-components 1
+          cd tmp
+          # get all jar files present in the tarball 
+          find . -type f -name "*.jar" | awk -F '/' '{print $NF}' > tarball_jars.txt
+          cd ..
+          echo "Number of jars to upload: $( wc -l tmp/tarball_jars.txt )"
+          readarray -t jar_files < tmp/tarball_jars.txt
+          echo "JAR files in the tarball: $jar_files"
+
+          # loop over the mvn local repository
+          if [ ! -f ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/repository.zip ]
+          then
+            echo "No Jar dependencies found!"
+            exit 0
+          fi
+          # unzip maven repository folder
+          unzip ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/repository.zip
+          cd repository
+          # get all folder structure in the mvn repository
+          find . -mindepth 3 -maxdepth 10 -type d -ls | awk -F ' ' '{print $11}' > paths.txt
+          while read path; do
+            count=$( ls "$path"/*.jar 2>/dev/null | wc -l )
+            if [ $count != 0 ]
+            then 
+              echo "Folder anlyzed: $path"
+              for jar_file in $( ls "$path"/*.jar | awk -F '/' '{print $NF}'); do 
+                echo "JAR FILE: $jar_file"
+                if [[ " ${jar_files[*]} " =~ " ${jar_file} " ]]; then
+                  for file in "$path"/*; do
+                    filename=$(echo "$file" | awk -F '/' '{print $NF}')
+                    repo_path="${file:2}"
+                    echo "repo_path: $repo_path"
+                    folder_structure=${repo_path%"$filename"*}
+                    if [[ $filename != _* ]]
+                    then 
+                      echo "Upload file: $file"
+                      curl -X PUT -u "${{ secrets[inputs.artifactory-user] }}":"${{ secrets[inputs.artifactory-token] }}" -T "$file" "${{ secrets[inputs.artifactory-url] }}${folder_structure}"
+                    else
+                      echo "DO NOT Upload file: $file"
+                    fi
+                  done
+                else
+                  echo "Jar file not present in the list: $jar_file"
+                fi
+              done
+            fi 
+          done < paths.txt
+          echo "Upload of dependencies completed!"
