@@ -28,8 +28,7 @@ def get_series(lp_project: Entry, version: str, app:str):
     series = lp_project.getSeries(name=series_name)
     if series:
         return series
-    else:
-        return lp_project.newSeries(name=series_name, summary=f"Series {series} for application {app}")
+    return lp_project.newSeries(name=series_name, summary=f"Series {series} for application {app}")
 
 
 def get_milestone(lp_project: Entry, lp_series: Entry, version: str):
@@ -37,7 +36,6 @@ def get_milestone(lp_project: Entry, lp_series: Entry, version: str):
     milestones = [milestone.name for milestone in lp_series.all_milestones]
     if version in milestones:
         return lp_project.getMilestone(name=version)
-
     return lp_series.newMilestone(name=version)
 
 
@@ -93,7 +91,6 @@ def main():
 
     lp_project = launchpad.projects[args.project]
     
-    print(lp_project.private)
     if lp_project.private:
         logger.info(f"Project {lp_project} is PRIVATE. No release can be done!")
         exit(0)
