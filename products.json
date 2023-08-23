@@ -2,7 +2,7 @@
     {
         "name": "spark",
         "lp-building-project": "soss",
-        "lp-releasing-project": "soss",
+        "lp-releasing-project": "spark-releases",
         "lp-building-repo": "~data-platform/soss/+source/charmed-spark/+git/charmed-spark/",
         "lp-building-branch-prefix": "lp-spark-3.4",
         "lp-consumer-key": "LP_CONSUMER_KEY_SPARK",
