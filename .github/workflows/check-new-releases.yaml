@@ -209,7 +209,7 @@ jobs:
           fi
           tarball_filename=$(ls ${{ inputs.tarball-regex }})
           echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_OUTPUT
-          version=$( python uploader/services.py get-version -n $tarball_filename )
+          version=$( python ../../uploader/services.py get-version -n $tarball_filename )
           # version=$( echo "${{ matrix.version }}" | awk -F '-' '{print $NF}' )
           track=$(echo "${{ inputs.lp-building-branch-prefix }}" | awk -F '-' '{print $NF}')
 
