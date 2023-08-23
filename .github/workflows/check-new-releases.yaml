@@ -243,7 +243,7 @@ jobs:
           python3 uploader/launchpad_release.py \
             --app "${{ inputs.name }}" \
             --project "${{ inputs.lp-releasing-project }}" \
-            --track "${{ steps.get-tarball-name.outputs.TRACK }}"
+            --track "${{ steps.get-tarball-name.outputs.TRACK }}" \
             --version "${{ steps.get-tarball-name.outputs.VERSION }}" \
             --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}" \
             --credentials ${{ env.LP_CREDENTIALS }}
