@@ -4,8 +4,6 @@
 import re
 from typing import List
 
-import git
-
 PRODUCT_PATTERN = "^[a-z]*-\\d[.]\\d[.]\\d-.*-ubuntu-(0|[1-9][0-9]*)-(20\\d{2})[01][1-9][0-3][1-9][0-1]\\d[0-5]\\d[0-5]\\d\\S*"
 TAG_PATTERN = "-(20\\d{2})[01][1-9][0-3][1-9][0-1]\\d[0-5]\\d[0-5]\\d\\S*"
 
@@ -56,8 +54,8 @@ def get_version_from_tarball_name(tarball_name: str) -> str:
         raise ValueError("ERROR")
 
 
-def get_repo_tags(url: str, prefix: str) -> List[str]:
-    """This function return the list of tags in the database."""
-    repo = git.Repo(url)
-    tags = sorted(repo.tags, key=lambda t: t.commit.committed_datetime)
-    return [item for item in tags if item.startswith(prefix)]
+# def get_repo_tags(url: str, prefix: str) -> List[str]:
+#     """This function return the list of tags in the database."""
+#     repo = git.Repo(url)
+#     tags = sorted(repo.tags, key=lambda t: t.commit.committed_datetime)
+#     return [item for item in tags if item.startswith(prefix)]
