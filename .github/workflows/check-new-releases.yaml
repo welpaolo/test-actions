@@ -209,10 +209,15 @@ jobs:
           fi
           tarball_filename=$(ls ${{ inputs.tarball-regex }})
           echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_OUTPUT
-          version=$( echo "${{ matrix.version }}" | awk -F '-' '{print $NF}' )
+          version=$( python uploader/services.py get-version -n $tarball_filename )
+          # version=$( echo "${{ matrix.version }}" | awk -F '-' '{print $NF}' )
+          track=$(echo "${{ inputs.lp-building-branch-prefix }}" | awk -F '-' '{print $NF}')
+
           echo "VERSION=$version" >> $GITHUB_OUTPUT
+          echo "TRACK=$track" >> $GITHUB_OUTPUT
           echo "Tarball filename: $tarball_filename"
           echo "Software version: $version"
+          echo "Track: $track"
       
       - name: Create credentials file
         env:
@@ -238,13 +243,16 @@ jobs:
           python3 uploader/launchpad_release.py \
             --app "${{ inputs.name }}" \
             --project "${{ inputs.lp-releasing-project }}" \
+            --track "${{ steps.get-tarball-name.outputs.TRACK }}"
             --version "${{ steps.get-tarball-name.outputs.VERSION }}" \
             --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}" \
             --credentials ${{ env.LP_CREDENTIALS }}
+      
+      # to be removed soon
       - name: Delete previous release
         uses: cb80/delrel@latest
         with:
-          tag: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.VERSION }}
+          tag: ${{ steps.get-tarball-name.outputs.VERSION }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release the package
@@ -253,8 +261,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          release_name: Release ${{ inputs.name }} ${{ steps.get-tarball-name.outputs.VERSION }}
-          tag_name: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.VERSION }}
+          release_name: Release ${{ steps.get-tarball-name.outputs.VERSION }}
+          tag_name: ${{ steps.get-tarball-name.outputs.VERSION }}
 
       - name: Upload release asset
         uses: actions/upload-release-asset@v1

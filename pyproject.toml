@@ -60,6 +60,7 @@ oauthlib = ">=3.2.2"
 pyparsing = ">=3.1.0"
 six = ">=1.16.0"
 wadllib = ">=1.3.6"
+GitPython = ">=3.1.32"
 
 [tool.poetry.group.fmt]
 optional = true
@@ -78,7 +79,6 @@ flake8 = ">=4.0.1"
 Flake8-pyproject = ">=1.1.0"
 mypy = ">=0.910"
 pytest-mypy = ">=0.10.3"
-lightkube = ">=0.11"
 
 [tool.poetry.group.unit]
 optional = true

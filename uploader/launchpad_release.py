@@ -23,6 +23,7 @@ def parse_args() -> Namespace:
     )
     parser.add_argument("-p", "--project", help="LP Project name.")
     parser.add_argument("-t", "--tarball", help="Tarball file path.")
+    parser.add_argument("-s", "--track", help="The application version (i.e: 2.8.0)")
     parser.add_argument("-v", "--version", help="The application version (i.e: 2.8.0)")
     parser.add_argument(
         "-c", "--credentials", help="Credentials file to authenticate the LP client."
@@ -30,14 +31,13 @@ def parse_args() -> Namespace:
     return parser.parse_args()
 
 
-def get_series(lp_project: Entry, version: str, app: str):
+def get_series(lp_project: Entry, track: str, app: str):
     """Fetch the series matching the current version."""
-    series_name = ".".join(version.split(".")[:2])
-    series = lp_project.getSeries(name=series_name)
+    series = lp_project.getSeries(name=track)
     if series:
         return series
     return lp_project.newSeries(
-        name=series_name, summary=f"Series {series} for application {app}"
+        name=track, summary=f"Series {series} for application {app}"
     )
 
 
@@ -79,14 +79,16 @@ def get_release(
     return release
 
 
-def upload_release_files(release, app: str, tarball_file_path: str, version: str):
+def upload_release_files(
+    release, app: str, tarball_file_path: str, track: str, version: str
+):
     """Upload the tarball and signature file if any."""
     tarball = Path(tarball_file_path)
     signature = Path(f"{tarball_file_path}.asc")
 
     payload = {
         "content_type": "application/x-gtar",
-        "description": f"{app} {version}",
+        "description": f"{app} {track} {version}",
         "file_content": tarball.read_bytes(),
         "file_type": "Code Release Tarball",
         "filename": str(tarball.name),
@@ -115,7 +117,7 @@ def main():
     # check if project is private stop HERE
 
     # fetch project series matching with version
-    lp_series = get_series(lp_project, args.version, args.app)
+    lp_series = get_series(lp_project, args.track, args.app)
 
     # get milestone or create if not exists
     lp_milestone = get_milestone(lp_project, lp_series, args.version)
