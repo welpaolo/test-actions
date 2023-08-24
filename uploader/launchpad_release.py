@@ -1,34 +1,44 @@
 #!/usr/bin/env python3
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+import logging
 from argparse import ArgumentParser, Namespace
 from datetime import datetime
+from pathlib import Path
+
 from launchpadlib.errors import HTTPError
 from launchpadlib.launchpad import Launchpad
-from pathlib import Path
 from lazr.restfulclient.resource import Entry
-import logging
 
-logger=logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 LP_SERVER = "production"
 
 
 def parse_args() -> Namespace:
     """Parse command line args."""
     parser = ArgumentParser()
-    parser.add_argument("-a", "--app", help="Application name, i.e: OpenSearch, Spark etc.")
+    parser.add_argument(
+        "-a", "--app", help="Application name, i.e: OpenSearch, Spark etc."
+    )
     parser.add_argument("-p", "--project", help="LP Project name.")
     parser.add_argument("-t", "--tarball", help="Tarball file path.")
+    parser.add_argument("-s", "--track", help="The application track (i.e: 2)")
     parser.add_argument("-v", "--version", help="The application version (i.e: 2.8.0)")
-    parser.add_argument("-c", "--credentials", help="Credentials file to authenticate the LP client.")
+    parser.add_argument(
+        "-c", "--credentials", help="Credentials file to authenticate the LP client."
+    )
     return parser.parse_args()
 
 
-def get_series(lp_project: Entry, version: str, app:str):
+def get_series(lp_project: Entry, track: str, app: str):
     """Fetch the series matching the current version."""
-    series_name = ".".join(version.split(".")[:2])
-    series = lp_project.getSeries(name=series_name)
+    series = lp_project.getSeries(name=track)
     if series:
         return series
-    return lp_project.newSeries(name=series_name, summary=f"Series {series} for application {app}")
+    return lp_project.newSeries(
+        name=track, summary=f"Series {series} for application {app}"
+    )
 
 
 def get_milestone(lp_project: Entry, lp_series: Entry, version: str):
@@ -39,7 +49,13 @@ def get_milestone(lp_project: Entry, lp_series: Entry, version: str):
     return lp_series.newMilestone(name=version)
 
 
-def get_release(lp_project: Entry, lp_series: Entry, lp_milestone: Entry, tarball_path: str, version: str):
+def get_release(
+    lp_project: Entry,
+    lp_series: Entry,
+    lp_milestone: Entry,
+    tarball_path: str,
+    version: str,
+):
     """Get release or create one if not exists."""
     releases = [release.version for release in lp_series.releases]
     if version not in releases:
@@ -63,14 +79,16 @@ def get_release(lp_project: Entry, lp_series: Entry, lp_milestone: Entry, tarbal
     return release
 
 
-def upload_release_files(release, app: str, tarball_file_path: str, version: str):
+def upload_release_files(
+    release, app: str, tarball_file_path: str, track: str, version: str
+):
     """Upload the tarball and signature file if any."""
     tarball = Path(tarball_file_path)
     signature = Path(f"{tarball_file_path}.asc")
 
     payload = {
         "content_type": "application/x-gtar",
-        "description": f"{app} {version}",
+        "description": f"{app} {track} {version}",
         "file_content": tarball.read_bytes(),
         "file_type": "Code Release Tarball",
         "filename": str(tarball.name),
@@ -87,26 +105,30 @@ def main():
     args = parse_args()
 
     # get launchpad client
-    launchpad = Launchpad.login_with(args.project, LP_SERVER, credentials_file=args.credentials)
+    launchpad = Launchpad.login_with(
+        args.project, LP_SERVER, credentials_file=args.credentials
+    )
 
     lp_project = launchpad.projects[args.project]
-    
+
     if lp_project.private:
         logger.info(f"Project {lp_project} is PRIVATE. No release can be done!")
         exit(0)
     # check if project is private stop HERE
 
     # fetch project series matching with version
-    lp_series = get_series(lp_project, args.version, args.app)
+    lp_series = get_series(lp_project, args.track, args.app)
 
     # get milestone or create if not exists
     lp_milestone = get_milestone(lp_project, lp_series, args.version)
 
     # get release or create if not exists
-    lp_release = get_release(lp_project, lp_series, lp_milestone, args.tarball, args.version)
+    lp_release = get_release(
+        lp_project, lp_series, lp_milestone, args.tarball, args.version
+    )
 
     # upload the tarball and signature file if any
-    upload_release_files(lp_release, args.app, args.tarball, args.version)
+    upload_release_files(lp_release, args.app, args.tarball, args.track, args.version)
 
 
 if __name__ == "__main__":

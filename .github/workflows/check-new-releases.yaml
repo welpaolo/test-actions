@@ -96,7 +96,7 @@ jobs:
 
       - name: Run download script from LP
         run: |
-          python3 launchpad_downloader.py \
+          python3 uploader/launchpad_downloader.py \
             --repository-url ${{ inputs.lp-building-repo }} \
             --branch-prefix ${{ inputs.lp-building-branch-prefix }} \
             --credential-file ${{ env.LP_CREDENTIALS }} \
@@ -105,46 +105,8 @@ jobs:
       - name: Check for same version
         id: check-release
         run: |
+          python3 uploader/services.py check-version --output-directory ${{ env.OUTPUT_DIR }} --tarball-pattern ${{ inputs.tarball-regex }} --repository-owner welpaolo --project-name ${{ github.event.repository.name }}
           cd ${{ env.OUTPUT_DIR }};
-          for folder in $(ls .); do
-            echo "Folder: $folder"
-            version=$( echo "$folder" | awk -F '-' '{print $NF}' )
-            echo "Version: $version"
-            release_name="${{ inputs.name }}"-"$version"
-            echo "Release name: $release_name"
-            count=$( ls $folder/*.sha512 | wc -l )
-            if [ $count != 1 ]; then
-              echo "Checksum not present!"
-              exit 1
-            fi 
-            checksum_path=$( ls $folder/*.sha512 )
-            echo "Checksum file path: $checksum_path"
-            checksum_file_name=$( echo $checksum_path | awk -F '/' '{print $NF}')
-            echo "Checksum file name: $checksum_file_name"
-            # get checksum value
-            new_checksum_value=$( cat $checksum_path | awk -F ' ' '{print $1}')
-            echo "Current checksum value: $new_checksum_value"
-            # download 
-            output_file="/tmp/$checksum_file_name"
-            url="${{ github.server_url }}/${{ github.repository }}/releases/download/$release_name/$checksum_file_name"
-            http_code=$(curl -Is $url | head -1 | awk -F ' ' '{print $2}')
-            if [ $http_code = "200" ]; then
-              echo "Download checksum from $url"
-              wget $url -O $output_file
-              old_checksum_value=$( cat $output_file | awk -F ' ' '{print $1}')
-              echo "Old checksum value: $old_checksum_value"
-              if [[ $new_checksum_value = $old_checksum_value ]]
-              then
-                echo "Same checksum, DO NOT UPDATE RELEASE"
-                rm -rf $folder
-              else
-                echo "Different checksum, UPDATE RELEASE"
-              fi
-            else
-              echo "No release available for item: $release_name"
-            fi
-          done
-
           number_of_releases=$( ls . | wc -l )
           echo "Number of remaining releases: $number_of_releases"
           if [ $number_of_releases != 1 ]; then
@@ -207,10 +169,15 @@ jobs:
           fi
           tarball_filename=$(ls ${{ inputs.tarball-regex }})
           echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_OUTPUT
-          version=$( echo "${{ matrix.version }}" | awk -F '-' '{print $NF}' )
+          version=$( python ../../uploader/services.py get-version -n $tarball_filename )
+          # version=$( echo "${{ matrix.version }}" | awk -F '-' '{print $NF}' )
+          track=$(echo "${{ inputs.lp-building-branch-prefix }}" | awk -F '-' '{print $NF}')
+
           echo "VERSION=$version" >> $GITHUB_OUTPUT
+          echo "TRACK=$track" >> $GITHUB_OUTPUT
           echo "Tarball filename: $tarball_filename"
           echo "Software version: $version"
+          echo "Track: $track"
       
       - name: Create credentials file
         env:
@@ -233,16 +200,19 @@ jobs:
         id: create-new-lp-release
         run: |
           echo "Tarball name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }} | version: ${{ steps.get-tarball-name.outputs.VERSION }}"
-          python3 launchpad_release.py \
+          python3 uploader/launchpad_release.py \
             --app "${{ inputs.name }}" \
             --project "${{ inputs.lp-releasing-project }}" \
+            --track "${{ steps.get-tarball-name.outputs.TRACK }}" \
             --version "${{ steps.get-tarball-name.outputs.VERSION }}" \
             --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}" \
             --credentials ${{ env.LP_CREDENTIALS }}
+      
+      # to be removed soon
       - name: Delete previous release
         uses: cb80/delrel@latest
         with:
-          tag: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.VERSION }}
+          tag: ${{ steps.get-tarball-name.outputs.VERSION }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release the package
@@ -251,8 +221,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          release_name: Release ${{ inputs.name }} ${{ steps.get-tarball-name.outputs.VERSION }}
-          tag_name: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.VERSION }}
+          release_name: Release ${{ steps.get-tarball-name.outputs.VERSION }}
+          tag_name: ${{ steps.get-tarball-name.outputs.VERSION }}
 
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
