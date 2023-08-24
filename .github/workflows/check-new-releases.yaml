@@ -169,7 +169,7 @@ jobs:
           fi
           tarball_filename=$(ls ${{ inputs.tarball-regex }})
           echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_OUTPUT
-          version=$( python ../../uploader/services.py get-version -n $tarball_filename )
+          version=$( python3 ../../uploader/services.py get-version -n $tarball_filename )
           # version=$( echo "${{ matrix.version }}" | awk -F '-' '{print $NF}' )
           track=$(echo "${{ inputs.lp-building-branch-prefix }}" | awk -F '-' '{print $NF}')
 
@@ -208,13 +208,6 @@ jobs:
             --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}" \
             --credentials ${{ env.LP_CREDENTIALS }}
       
-      # to be removed soon
-      - name: Delete previous release
-        uses: cb80/delrel@latest
-        with:
-          tag: ${{ steps.get-tarball-name.outputs.VERSION }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Release the package
         id: create-new-release
         uses: actions/create-release@v1
