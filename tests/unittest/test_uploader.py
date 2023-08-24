@@ -9,14 +9,6 @@ from uploader.utils import (
 )
 
 
-def test_a():
-    """
-    AAA.
-    """
-
-    assert "a", "a"
-
-
 def test_valid_product_name():
     """This function test the validity of product name."""
 

@@ -9,26 +9,22 @@ from utils import (
     check_release_exists,
     get_version_from_tarball_name,
     is_valid_product_name,
+    upload_jars,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class Actions(str, Enum):
-    NAME = "get-name"
     VERSION = "get-version"
     VALID_NAME = "validate-name"
-    # here
     CHECK_VERSION = "check-version"
-    LIST = "list"
+    UPLOAD = "upload"
 
 
 def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
     subparser = parser.add_subparsers(dest="action")
     subparser.required = True
-
-    # parser_name = subparser.add_parser(Actions.NAME.value)
-    # parser_name.add_argument('-n', '--name', type=str, help="Name of the ")
 
     parser_tag = subparser.add_parser(Actions.VERSION.value)
     parser_tag.add_argument(
@@ -56,6 +52,24 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
     parser_validation.add_argument(
         "-p", "--project-name", type=str, help="Project name."
     )
+
+    parser_validation = subparser.add_parser(Actions.UPLOAD.value)
+    parser_validation.add_argument(
+        "-t", "--tarball-path", type=str, help="Tarball path."
+    )
+    parser_validation.add_argument(
+        "-r", "--mvn-repository", type=str, help="Maven repository path."
+    )
+    parser_validation.add_argument(
+        "-a", "--artifactory-url", type=str, help="Artifactory url."
+    )
+    parser_validation.add_argument(
+        "-u", "--artifactory-username", type=str, help="Artifactory username."
+    )
+    parser_validation.add_argument(
+        "-p", "--artifactory-password", type=str, help="Artifactory password."
+    )
+
     return parser
 
 
@@ -79,8 +93,17 @@ def main(args: Namespace):
             args.project_name,
         )
         exit(0)
+    elif args.action == Actions.UPLOAD:
+        upload_jars(
+            args.tarball_path,
+            args.mvn_repository,
+            args.artifactory_url,
+            args.artifactory_username,
+            args.artifactory_password,
+        )
+        exit(0)
     else:
-        raise ValueError(f"Option: {args.name} is ")
+        raise ValueError(f"Option: {args.action} is not valid!")
 
 
 if __name__ == "__main__":

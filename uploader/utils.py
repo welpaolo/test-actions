@@ -6,15 +6,27 @@ import logging
 import os
 import re
 import shutil
+import tarfile
+import zipfile
 from typing import List
 
 import requests
+from requests.auth import HTTPBasicAuth
 
 logger = logging.getLogger(__name__)
 
 PRODUCT_PATTERN = "^[a-z]*-\\d[.]\\d[.]\\d-.*-ubuntu(0|[1-9][0-9]*)-(20\\d{2})[01][1-9][0-3][1-9][0-1]\\d[0-5]\\d[0-5]\\d\\S*"
 TAG_PATTERN = "-(20\\d{2})[01][1-9][0-3][1-9][0-1]\\d[0-5]\\d[0-5]\\d\\S*"
 RELEASE_VERSION = "^[a-z]*-\\d[.]\\d[.]\\d-.*-ubuntu(0|[1-9][0-9]*)"
+
+CUSTOM_KEYMAP = [".jar", ".pom", ".sha1", ".sha256", ".sha512"]
+
+
+def file_comparator(file: str):
+    """Comparator for ordering file extensions for upload."""
+    if os.path.splitext(file)[1] in CUSTOM_KEYMAP:
+        return CUSTOM_KEYMAP.index(os.path.splitext(file)[1])
+    return 100
 
 
 def is_valid_release_version(release_version: str) -> bool:
@@ -124,27 +136,63 @@ def check_next_release_name(
     return True
 
 
-def check_if_version_published(
-    folder: str, tarball_regex: str, published_version: List[str]
-) -> bool:
-    """This function check if a specific version has been already published."""
-    return False
+def get_jars_in_tarball(tarball_path: str) -> List[str]:
+    """Return all the jars contained into a tarball."""
+    jar_filenames = []
+    os.mkdir("tmp")
+
+    file = tarfile.open(tarball_path)
+    file.extractall("tmp/")
+    file.close()
+
+    for _, _, files in os.walk("tmp/"):
+        for file in files:
+            if file.endswith(".jar"):
+                jar_filenames.append(file)
+    logger.info(f"Number of jars: {len(jar_filenames)}")
+    shutil.rmtree("tmp")
+    return jar_filenames
 
 
-def get_published_version() -> List[str]:
-    """This function returns the published versions."""
+def upload_jars(
+    tarball_path: str,
+    maven_repository_archive: str,
+    artifactory_repository: str,
+    artifactory_username: str,
+    artifactory_password: str,
+):
+    """Upload jars to artifactory."""
+    jars_to_upload = get_jars_in_tarball(tarball_path)
+    os.mkdir("tmp")
+    with zipfile.ZipFile(maven_repository_archive, "r") as zip:
+        zip.extractall("tmp/")
 
-    return []
+    subdirs = []
+    folder = "tmp/repository/"
+    for subdir, _, files in os.walk(folder):
+        for file in files:
+            if file.endswith(".jar"):
+                if file in jars_to_upload:
+                    logger.info(f"subdir: {subdir}")
+                    subdirs.append(subdir)
 
+    for subdir in subdirs:
+        files = sorted(os.listdir(subdir), key=file_comparator)
+        for file in files:
+            if file.startswith("_") or file.endswith(".repositories"):
+                continue
+            url = f"{artifactory_repository}{subdir.replace(folder,'')}/{file}"
+            logger.debug(f"upload url: {url}")
+            headers = {"Content-Type": "application/java-application"}
+            r = requests.put(
+                url,
+                headers=headers,
+                data=open(f"{subdir}/{file}", "rb"),
+                auth=HTTPBasicAuth(artifactory_username, artifactory_password),
+            )
+            assert r.status_code == 201
 
-def get_version_from_filename(artifact_name: str) -> str:
-    """Get version from tarball filename."""
-    raise NotImplementedError
-
-
-def download_checksum(url: str) -> str:
-    """This function download the checksum from Github."""
-    raise NotImplementedError
+    shutil.rmtree("tmp")
 
 
 def get_version_from_tarball_name(tarball_name: str) -> str:
