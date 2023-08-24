@@ -105,48 +105,8 @@ jobs:
       - name: Check for same version
         id: check-release
         run: |
+          python3 uploader/services.py check-version --output-directory ${{ env.OUTPUT_DIR }} --tarball-pattern ${{ inputs.tarball-regex }} --repository-owner welpaolo --project-name ${{ github.event.repository.name }}
           cd ${{ env.OUTPUT_DIR }};
-          for folder in $(ls .); do
-            echo "Folder: $folder"
-            version=$( echo "$folder" | awk -F '-' '{print $NF}' )
-            echo "Version: $version"
-            release_name="${{ inputs.name }}"-"$version"
-            echo "Release name: $release_name"
-            count=$( ls $folder/*.sha512 | wc -l )
-            if [ $count != 1 ]; then
-              echo "Checksum not present!"
-              exit 1
-            fi 
-            checksum_path=$( ls $folder/*.sha512 )
-            echo "Checksum file path: $checksum_path"
-            checksum_file_name=$( echo $checksum_path | awk -F '/' '{print $NF}')
-            echo "Checksum file name: $checksum_file_name"
-            # get checksum value
-            new_checksum_value=$( cat $checksum_path | awk -F ' ' '{print $1}')
-            echo "Current checksum value: $new_checksum_value"
-            # download 
-            output_file="/tmp/$checksum_file_name"
-            url="${{ github.server_url }}/${{ github.repository }}/releases/download/$release_name/$checksum_file_name"
-            echo "URL: $url"
-            http_code=$(curl -ILs $url | grep 'HTTP/2' | tail -n 1 | awk -F ' ' '{print $2}')
-            echo "Return code: $http_code"
-            if [ $http_code = "200" ]; then
-              echo "Download checksum from $url"
-              wget $url -O $output_file
-              old_checksum_value=$( cat $output_file | awk -F ' ' '{print $1}')
-              echo "Old checksum value: $old_checksum_value"
-              if [[ $new_checksum_value = $old_checksum_value ]]
-              then
-                echo "Same checksum, DO NOT UPDATE RELEASE"
-                rm -rf $folder
-              else
-                echo "Different checksum, UPDATE RELEASE"
-              fi
-            else
-              echo "No release available for item: $release_name"
-            fi
-          done
-
           number_of_releases=$( ls . | wc -l )
           echo "Number of remaining releases: $number_of_releases"
           if [ $number_of_releases != 1 ]; then

@@ -5,7 +5,11 @@ import logging
 from argparse import ArgumentParser, Namespace
 from enum import Enum
 
-from utils import get_version_from_tarball_name, is_valid_product_name
+from utils import (
+    check_release_exists,
+    get_version_from_tarball_name,
+    is_valid_product_name,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +19,7 @@ class Actions(str, Enum):
     VERSION = "get-version"
     VALID_NAME = "validate-name"
     # here
+    CHECK_VERSION = "check-version"
     LIST = "list"
 
 
@@ -35,12 +40,26 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
         "-n", "--name", type=str, help="Validate the name of the tarball."
     )
 
+    parser_validation = subparser.add_parser(Actions.CHECK_VERSION.value)
+    parser_validation.add_argument(
+        "-o",
+        "--output-directory",
+        type=str,
+        help="Path of the directory where releases are downloaded.",
+    )
+    parser_validation.add_argument(
+        "-t", "--tarball-pattern", type=str, help="Tarball pattern."
+    )
+    parser_validation.add_argument(
+        "-r", "--repository-owner", type=str, help="Repository owner."
+    )
+    parser_validation.add_argument(
+        "-p", "--project-name", type=str, help="Project name."
+    )
     return parser
 
 
 def main(args: Namespace):
-    logger.info("HERE")
-
     if args.action == Actions.VERSION:
         if is_valid_product_name(args.name):
             print(get_version_from_tarball_name(args.name))
@@ -51,6 +70,17 @@ def main(args: Namespace):
         if is_valid_product_name(args.name):
             exit(0)
         raise ValueError("Invalid product name!")
+
+    elif args.action == Actions.CHECK_VERSION:
+        check_release_exists(
+            args.output_directory,
+            args.tarball_pattern,
+            args.repository_owner,
+            args.project_name,
+        )
+        exit(0)
+    else:
+        raise ValueError(f"Option: {args.name} is ")
 
 
 if __name__ == "__main__":

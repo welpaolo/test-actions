@@ -23,7 +23,7 @@ def parse_args() -> Namespace:
     )
     parser.add_argument("-p", "--project", help="LP Project name.")
     parser.add_argument("-t", "--tarball", help="Tarball file path.")
-    parser.add_argument("-s", "--track", help="The application version (i.e: 2.8.0)")
+    parser.add_argument("-s", "--track", help="The application track (i.e: 2)")
     parser.add_argument("-v", "--version", help="The application version (i.e: 2.8.0)")
     parser.add_argument(
         "-c", "--credentials", help="Credentials file to authenticate the LP client."
@@ -128,7 +128,7 @@ def main():
     )
 
     # upload the tarball and signature file if any
-    upload_release_files(lp_release, args.app, args.tarball, args.version)
+    upload_release_files(lp_release, args.app, args.tarball, args.track, args.version)
 
 
 if __name__ == "__main__":
