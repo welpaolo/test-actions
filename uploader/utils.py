@@ -56,7 +56,12 @@ def get_product_tags(
 ):
     """This function return the tags related to a product."""
     tags = get_repositories_tags(repository_owner, project_name)
-    return [t for t in tags if t.startswith(f"{product_name}-{product_version}")]
+    return [
+        t
+        for t in tags
+        if t.startswith(f"{product_name}-{product_version}")
+        and is_valid_release_version(t)
+    ]
 
 
 def check_release_exists(
