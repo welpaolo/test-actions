@@ -283,10 +283,10 @@ jobs:
         run: |
           python3 uploader/services.py \
             upload-product-jars \
-            --tarball-path ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }} \
-            --mvn-repository ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/repository.zip \
-            --artifactory-url ${{ secrets[inputs.artifactory-url] }} \
-            --artifactory-username ${{ secrets[inputs.artifactory-user] }} \ 
-            --artifactory-password ${{ secrets[inputs.artifactory-token] }}
+            --tarball-path "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}" \
+            --mvn-repository "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/repository.zip" \
+            --artifactory-url "${{ secrets[inputs.artifactory-url] }}" \
+            --artifactory-username "${{ secrets[inputs.artifactory-user] }}" \ 
+            --artifactory-password "${{ secrets[inputs.artifactory-token] }}"
 
           echo "Upload of dependencies completed!"
