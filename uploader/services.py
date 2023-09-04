@@ -42,46 +42,46 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
         required=True,
     )
 
-    parser_validation = subparser.add_parser(
+    parser_check_version = subparser.add_parser(
         Actions.CHECK_VERSION.value,
         help="Check if the name of the tarball is valid wrt to the published tarballs.",
     )
-    parser_validation.add_argument(
+    parser_check_version.add_argument(
         "-o",
         "--output-directory",
         type=str,
         help="Path of the directory where releases are downloaded.",
         required=True,
     )
-    parser_validation.add_argument(
+    parser_check_version.add_argument(
         "-t", "--tarball-pattern", type=str, help="Tarball pattern.", required=True
     )
-    parser_validation.add_argument(
+    parser_check_version.add_argument(
         "-r", "--repository-owner", type=str, help="Repository owner.", required=True
     )
-    parser_validation.add_argument(
+    parser_check_version.add_argument(
         "-p", "--project-name", type=str, help="Project name.", required=True
     )
 
-    parser_validation = subparser.add_parser(Actions.UPLOAD.value, help="")
-    parser_validation.add_argument(
+    parser_upload = subparser.add_parser(Actions.UPLOAD.value, help="Upload jars present in the tarball to artifactory.")
+    parser_upload.add_argument(
         "-t", "--tarball-path", type=str, help="Tarball path.", required=True
     )
-    parser_validation.add_argument(
+    parser_upload.add_argument(
         "-r", "--mvn-repository", type=str, help="Maven repository path.", required=True
     )
-    parser_validation.add_argument(
+    parser_upload.add_argument(
         "-a", "--artifactory-url", type=str, help="Artifactory url.", required=True
     )
-    parser_validation.add_argument(
+    parser_upload.add_argument(
         "-u",
         "--artifactory-username",
         type=str,
         help="Artifactory username.",
         required=True,
     )
-    parser_validation.add_argument(
-        "-p",
+    parser_upload.add_argument(
+        "-z",
         "--artifactory-password",
         type=str,
         help="Artifactory password.",
