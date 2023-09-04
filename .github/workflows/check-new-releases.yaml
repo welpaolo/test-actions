@@ -281,7 +281,8 @@ jobs:
 
       - name: Upload Java dependencies to artifactory
         run: |
-          python3 uploader/services.py upload-product-jars \
+          python3 uploader/services.py \
+            upload-product-jars \
             --tarball-path ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }} \
             --mvn-repository ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/repository.zip \
             --artifactory-url ${{ secrets[inputs.artifactory-url] }} \

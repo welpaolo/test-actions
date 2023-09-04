@@ -29,11 +29,17 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
     parser_tag = subparser.add_parser(
         Actions.VERSION.value, help="Retrieve software version from tarball name."
     )
-    parser_tag.add_argument("-n", "--name", type=str, help="The product name to check.")
+    parser_tag.add_argument(
+        "-n", "--name", type=str, help="The product name to check.", required=True
+    )
 
     parser_validation = subparser.add_parser(Actions.VALID_NAME.value)
     parser_validation.add_argument(
-        "-n", "--name", type=str, help="Validate the name of the tarball."
+        "-n",
+        "--name",
+        type=str,
+        help="Validate the name of the tarball.",
+        required=True,
     )
 
     parser_validation = subparser.add_parser(
@@ -45,32 +51,41 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
         "--output-directory",
         type=str,
         help="Path of the directory where releases are downloaded.",
+        required=True,
     )
     parser_validation.add_argument(
-        "-t", "--tarball-pattern", type=str, help="Tarball pattern."
+        "-t", "--tarball-pattern", type=str, help="Tarball pattern.", required=True
     )
     parser_validation.add_argument(
-        "-r", "--repository-owner", type=str, help="Repository owner."
+        "-r", "--repository-owner", type=str, help="Repository owner.", required=True
     )
     parser_validation.add_argument(
-        "-p", "--project-name", type=str, help="Project name."
+        "-p", "--project-name", type=str, help="Project name.", required=True
     )
 
     parser_validation = subparser.add_parser(Actions.UPLOAD.value, help="")
     parser_validation.add_argument(
-        "-t", "--tarball-path", type=str, help="Tarball path."
+        "-t", "--tarball-path", type=str, help="Tarball path.", required=True
     )
     parser_validation.add_argument(
-        "-r", "--mvn-repository", type=str, help="Maven repository path."
+        "-r", "--mvn-repository", type=str, help="Maven repository path.", required=True
     )
     parser_validation.add_argument(
-        "-a", "--artifactory-url", type=str, help="Artifactory url."
+        "-a", "--artifactory-url", type=str, help="Artifactory url.", required=True
     )
     parser_validation.add_argument(
-        "-u", "--artifactory-username", type=str, help="Artifactory username."
+        "-u",
+        "--artifactory-username",
+        type=str,
+        help="Artifactory username.",
+        required=True,
     )
     parser_validation.add_argument(
-        "-p", "--artifactory-password", type=str, help="Artifactory password."
+        "-p",
+        "--artifactory-password",
+        type=str,
+        help="Artifactory password.",
+        required=True,
     )
 
     return parser
