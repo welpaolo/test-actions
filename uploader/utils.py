@@ -64,13 +64,13 @@ def get_product_tags(
     ]
 
 
-def check_release_exists(
+def check_new_releases(
     output_directory: str,
     tarball_pattern: str,
     repository_owner: str,
     project_name: str,
 ):
-    """Validates that the collected builds are"""
+    """Iterate over most recents releases and check if they need to be released."""
     assert output_directory
     logger.info(f"Analyzing directory: {output_directory}")
     folders_to_delete = []
@@ -88,6 +88,7 @@ def check_release_exists(
         related_tags = get_product_tags(
             repository_owner, project_name, product_name, product_version
         )
+        # delete folder with release if already published
         if new_release_version in related_tags:
             folders_to_delete.append(release_directory)
             continue

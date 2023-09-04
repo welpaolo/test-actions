@@ -74,7 +74,7 @@ jobs:
           echo "lp-building-branch-prefix: ${{ inputs.lp-building-branch-prefix }}"
           echo "tarball-regex: ${{ inputs.tarball-regex }}"
 
-      - name: Create credentials file
+      - name: Create credentials file for Launchpad
         env:
           CONSUMER_KEY: ${{ secrets[inputs.lp-consumer-key] }}
           ACCESS_TOKEN: ${{ secrets[inputs.lp-access-token] }}
@@ -94,7 +94,7 @@ jobs:
       - name: Create folder for storing the downloaded artifacts
         run: mkdir "${{ env.OUTPUT_DIR }}"
 
-      - name: Run download script from LP
+      - name: Download the most recent built tarballs from Launchpad
         run: |
           python3 uploader/launchpad_downloader.py \
             --repository-url ${{ inputs.lp-building-repo }} \
@@ -102,10 +102,15 @@ jobs:
             --credential-file ${{ env.LP_CREDENTIALS }} \
             --output-folder ${{ env.OUTPUT_DIR }}
       
-      - name: Check for same version
+      - name: Check if products needed to be released
         id: check-release
         run: |
-          python3 uploader/services.py check-version --output-directory ${{ env.OUTPUT_DIR }} --tarball-pattern ${{ inputs.tarball-regex }} --repository-owner welpaolo --project-name ${{ github.event.repository.name }}
+          python3 uploader/services.py \
+            check-releases \
+            --output-directory ${{ env.OUTPUT_DIR }} \
+            --tarball-pattern ${{ inputs.tarball-regex }} \
+            --repository-owner welpaolo --project-name ${{ github.event.repository.name }}
+          
           cd ${{ env.OUTPUT_DIR }};
           number_of_releases=$( ls . | wc -l )
           echo "Number of remaining releases: $number_of_releases"
@@ -139,7 +144,7 @@ jobs:
 
   release-artifact:
     if: ${{ needs.download-builds.outputs.release == 'true' }}
-    name: Release artifact on LP and Github
+    name: Release artifact on Launchpad and Github
     needs: download-builds
     runs-on: ubuntu-latest
     strategy:
@@ -156,7 +161,9 @@ jobs:
           name: releases-${{ inputs.name }}
 
       - name: Decompress all versions and list them
-        run: unzip ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip; ls "${{ env.OUTPUT_DIR }}";
+        run: |
+          unzip ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip 
+          ls "${{ env.OUTPUT_DIR }}"
 
       - name: Get tarball name and software version
         id: get-tarball-name
@@ -178,7 +185,7 @@ jobs:
           echo "Software version: $version"
           echo "Track: $track"
       
-      - name: Create credentials file
+      - name: Create credentials file for Launchpad
         env:
           CONSUMER_KEY: ${{ secrets[inputs.lp-consumer-key] }}
           ACCESS_TOKEN: ${{ secrets[inputs.lp-access-token] }}
@@ -195,7 +202,7 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      - name: LP release of packages
+      - name: Release package on Launchpad
         id: create-new-lp-release
         run: |
           echo "Tarball name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }} | version: ${{ steps.get-tarball-name.outputs.VERSION }}"
@@ -207,7 +214,7 @@ jobs:
             --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}" \
             --credentials ${{ env.LP_CREDENTIALS }}
       
-      - name: Release the package
+      - name: Release the package on Github
         id: create-new-release
         uses: actions/create-release@v1
         env:
@@ -216,7 +223,7 @@ jobs:
           release_name: Release ${{ steps.get-tarball-name.outputs.VERSION }}
           tag_name: ${{ steps.get-tarball-name.outputs.VERSION }}
 
-      - name: Upload release asset
+      - name: Upload tarball
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -236,9 +243,45 @@ jobs:
           asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
           asset_content_type: application/txt
 
+      - name: Delete previous latests release
+        uses: cb80/delrel@latest
+        with:
+          tag: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update latest release on Github
+        id: update-latest-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+
+          release_name: Release ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
+          tag_name: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
+
+      - name: Upload tarball
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.update-latest-release.outputs.upload_url }}
+          asset_path: ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
+          asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
+          asset_content_type: application/zip
+
+      - name: Upload checksum
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.update-latest-release.outputs.upload_url }}
+          asset_path: output/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
+          asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
+          asset_content_type: application/txt
+
       - name: Upload Java dependencies to artifactory
         run: |
-          python3 uploader/services.py upload \
+          python3 uploader/services.py upload-product-jars \
             --tarball-path ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }} \
             --mvn-repository ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/repository.zip \
             --artifactory-url ${{ secrets[inputs.artifactory-url] }} \

@@ -6,7 +6,7 @@ from argparse import ArgumentParser, Namespace
 from enum import Enum
 
 from utils import (
-    check_release_exists,
+    check_new_releases,
     get_version_from_tarball_name,
     is_valid_product_name,
     upload_jars,
@@ -18,25 +18,28 @@ logger = logging.getLogger(__name__)
 class Actions(str, Enum):
     VERSION = "get-version"
     VALID_NAME = "validate-name"
-    CHECK_VERSION = "check-version"
-    UPLOAD = "upload"
+    CHECK_VERSION = "check-releases"
+    UPLOAD = "upload-product-jars"
 
 
 def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
     subparser = parser.add_subparsers(dest="action")
     subparser.required = True
 
-    parser_tag = subparser.add_parser(Actions.VERSION.value)
-    parser_tag.add_argument(
-        "-n", "--name", type=str, help="Extract the version from the product name."
+    parser_tag = subparser.add_parser(
+        Actions.VERSION.value, help="Retrieve software version from tarball name."
     )
+    parser_tag.add_argument("-n", "--name", type=str, help="The product name to check.")
 
     parser_validation = subparser.add_parser(Actions.VALID_NAME.value)
     parser_validation.add_argument(
         "-n", "--name", type=str, help="Validate the name of the tarball."
     )
 
-    parser_validation = subparser.add_parser(Actions.CHECK_VERSION.value)
+    parser_validation = subparser.add_parser(
+        Actions.CHECK_VERSION.value,
+        help="Check if the name of the tarball is valid wrt to the published tarballs.",
+    )
     parser_validation.add_argument(
         "-o",
         "--output-directory",
@@ -53,7 +56,7 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
         "-p", "--project-name", type=str, help="Project name."
     )
 
-    parser_validation = subparser.add_parser(Actions.UPLOAD.value)
+    parser_validation = subparser.add_parser(Actions.UPLOAD.value, help="")
     parser_validation.add_argument(
         "-t", "--tarball-path", type=str, help="Tarball path."
     )
@@ -86,7 +89,7 @@ def main(args: Namespace):
         raise ValueError("Invalid product name!")
 
     elif args.action == Actions.CHECK_VERSION:
-        check_release_exists(
+        check_new_releases(
             args.output_directory,
             args.tarball_pattern,
             args.repository_owner,
@@ -103,7 +106,7 @@ def main(args: Namespace):
         )
         exit(0)
     else:
-        raise ValueError(f"Option: {args.action} is not valid!")
+        raise ValueError(f"Option: {args.action} is not a valid option!")
 
 
 if __name__ == "__main__":
