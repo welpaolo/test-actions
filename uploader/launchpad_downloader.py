@@ -91,11 +91,6 @@ def get_launchpad(credential_file: str) -> Launchpad:
     )
 
 
-def _get_version_urls():
-    """This function returns for each version the files that needed to be downloaded."""
-    pass
-
-
 def get_branches_in_repo(
     lp: Launchpad, repo_url: str, branch_prefix: str
 ) -> Dict[str, List[Any]]:

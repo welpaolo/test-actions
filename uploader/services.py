@@ -63,7 +63,9 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
         "-p", "--project-name", type=str, help="Project name.", required=True
     )
 
-    parser_upload = subparser.add_parser(Actions.UPLOAD.value, help="Upload jars present in the tarball to artifactory.")
+    parser_upload = subparser.add_parser(
+        Actions.UPLOAD.value, help="Upload jars present in the tarball to artifactory."
+    )
     parser_upload.add_argument(
         "-t", "--tarball-path", type=str, help="Tarball path.", required=True
     )

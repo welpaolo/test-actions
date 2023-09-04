@@ -21,12 +21,14 @@ def parse_args() -> Namespace:
     parser.add_argument(
         "-a", "--app", help="Application name, i.e: OpenSearch, Spark etc."
     )
-    parser.add_argument("-p", "--project", help="LP Project name.")
+    parser.add_argument("-p", "--project", help="Launchpad project name.")
     parser.add_argument("-t", "--tarball", help="Tarball file path.")
     parser.add_argument("-s", "--track", help="The application track (i.e: 2)")
     parser.add_argument("-v", "--version", help="The application version (i.e: 2.8.0)")
     parser.add_argument(
-        "-c", "--credentials", help="Credentials file to authenticate the LP client."
+        "-c",
+        "--credentials",
+        help="Credentials file to authenticate the Launchpad client.",
     )
     return parser.parse_args()
 
