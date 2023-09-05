@@ -30,7 +30,7 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
         Actions.VERSION.value, help="Retrieve software version from tarball name."
     )
     parser_tag.add_argument(
-        "-n", "--name", type=str, help="The product name to check.", required=True
+        "-n", "--name", type=str, help="The product name to be checked.", required=True
     )
 
     parser_validation = subparser.add_parser(Actions.VALID_NAME.value)
@@ -44,7 +44,7 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
 
     parser_check_version = subparser.add_parser(
         Actions.CHECK_VERSION.value,
-        help="Check if the name of the tarball is valid wrt to the published tarballs.",
+        help="Check if the name of the tarball is valid with respect to the published tarballs.",
     )
     parser_check_version.add_argument(
         "-o",
@@ -54,7 +54,7 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
         required=True,
     )
     parser_check_version.add_argument(
-        "-t", "--tarball-pattern", type=str, help="Tarball pattern.", required=True
+        "-t", "--tarball-pattern", type=str, help="Tarball pattern name.", required=True
     )
     parser_check_version.add_argument(
         "-r", "--repository-owner", type=str, help="Repository owner.", required=True
@@ -64,13 +64,18 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
     )
 
     parser_upload = subparser.add_parser(
-        Actions.UPLOAD.value, help="Upload jars present in the tarball to artifactory."
+        Actions.UPLOAD.value,
+        help="Upload jars contained in the tarball to artifactory.",
     )
     parser_upload.add_argument(
         "-t", "--tarball-path", type=str, help="Tarball path.", required=True
     )
     parser_upload.add_argument(
-        "-r", "--mvn-repository", type=str, help="Maven repository path.", required=True
+        "-r",
+        "--mvn-repository",
+        type=str,
+        help="Maven repository archive path.",
+        required=True,
     )
     parser_upload.add_argument(
         "-a", "--artifactory-url", type=str, help="Artifactory url.", required=True
@@ -97,13 +102,11 @@ def main(args: Namespace):
     if args.action == Actions.VERSION:
         if is_valid_product_name(args.name):
             print(get_version_from_tarball_name(args.name))
-            exit(0)
         raise ValueError("Invalid product name!")
 
     elif args.action == Actions.VALID_NAME:
-        if is_valid_product_name(args.name):
-            exit(0)
-        raise ValueError("Invalid product name!")
+        if not is_valid_product_name(args.name):
+            raise ValueError("Invalid product name!")
 
     elif args.action == Actions.CHECK_VERSION:
         check_new_releases(
@@ -112,7 +115,6 @@ def main(args: Namespace):
             args.repository_owner,
             args.project_name,
         )
-        exit(0)
     elif args.action == Actions.UPLOAD:
         upload_jars(
             args.tarball_path,
@@ -121,13 +123,12 @@ def main(args: Namespace):
             args.artifactory_username,
             args.artifactory_password,
         )
-        exit(0)
     else:
         raise ValueError(f"Option: {args.action} is not a valid option!")
 
 
 if __name__ == "__main__":
     args = create_services_parser(
-        ArgumentParser(description="Services utils for the Github Central Uploader")
+        ArgumentParser(description="Services for the Github Central Uploader")
     ).parse_args()
     main(args)

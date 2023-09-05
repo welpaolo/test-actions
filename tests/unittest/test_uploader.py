@@ -2,7 +2,11 @@
 # See LICENSE file for licensing details.
 
 
+from unittest.mock import patch
+
 from uploader.utils import (
+    check_next_release_name,
+    get_patch_version,
     get_repositories_tags,
     get_version_from_tarball_name,
     is_valid_product_name,
@@ -56,3 +60,51 @@ def test_get_repositories_tags():
     """This function test the retrivial of repository tags."""
     tags = get_repositories_tags("canonical", "kafka-operator")
     assert len(tags) > 0
+
+
+def test_check_next_release_name():
+    """This function test that the new release name is valid."""
+    with patch(
+        "uploader.utils.get_product_tags", return_value=["spark-3.4.1-bin-ubuntu0"]
+    ):
+        assert check_next_release_name(
+            "test-owner", "test-project", "spark", "3.4.1", "spark-3.4.1-bin-ubuntu1"
+        )
+        assert not check_next_release_name(
+            "test-owner",
+            "test-project",
+            "spark",
+            "3.4.1",
+            "spark-3.4.1-bin-ubuntu2",
+        )
+    with patch("uploader.utils.get_product_tags", return_value=[]):
+        assert check_next_release_name(
+            "test-owner", "test-project", "spark", "3.4.1", "spark-3.4.1-bin-ubuntu0"
+        )
+        assert not check_next_release_name(
+            "test-owner",
+            "test-project",
+            "spark",
+            "3.4.1",
+            "spark-3.4.1-bin-ubuntu1",
+        )
+
+
+def test_get_patch_version():
+    """This function test the extraction of the patch version."""
+
+    r_1 = "spark-3.4.1-bin-ubuntu0"
+    r_2 = "spark-3.3.1-bin-ubuntu1"
+    r_3 = "opensearch-2.9.0-linux-x64-ubuntu1"
+    r_4 = "spark-3.4.1-bin-ubuntu100"
+
+    p_1 = 0
+    p_2 = 1
+    p_3 = 1
+    p_4 = 100
+
+    release_names = [r_1, r_2, r_3, r_4]
+    patches = [p_1, p_2, p_3, p_4]
+
+    for idx, release_name in enumerate(release_names):
+        assert get_patch_version(release_name) == patches[idx]

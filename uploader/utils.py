@@ -185,6 +185,7 @@ def upload_jars(
     for subdir in subdirs:
         files = sorted(os.listdir(subdir), key=file_comparator)
         for file in files:
+            # skip temp files or metadata
             if file.startswith("_") or file.endswith(".repositories"):
                 continue
             url = f"{artifactory_repository}{subdir.replace(folder,'')}/{file}"
