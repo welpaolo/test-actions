@@ -144,17 +144,18 @@ def check_next_release_name(
 
 def get_jars_in_tarball(tarball_path: str) -> List[str]:
     """Return all the jars contained into a tarball."""
-    jar_filenames = []
     os.mkdir("tmp")
 
-    file = tarfile.open(tarball_path)
-    file.extractall("tmp/")
-    file.close()
+    with tarfile.open(tarball_path) as file:
+        file.extractall("tmp/")
 
-    for _, _, files in os.walk("tmp/"):
-        for file in files:
-            if file.endswith(".jar"):
-                jar_filenames.append(file)
+        jar_filenames = [
+            filename
+            for _, _, files in os.walk("tmp/")
+            for filename in files
+            if filename.endswith(".jar")
+        ]
+
     logger.info(f"Number of jars: {len(jar_filenames)}")
     shutil.rmtree("tmp")
     return jar_filenames
