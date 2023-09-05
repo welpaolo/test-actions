@@ -18,7 +18,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install tox
-        run: python3 -m pip install tox
+        run: |
+          python3 -m pip install tox
+          curl -sSL https://install.python-poetry.org | python3 -
+	        which poetry
+	        poetry --version
       - name: Run linters
         run: tox -e lint
 
@@ -30,6 +34,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install tox
-        run: python3 -m pip install tox
+        run: |
+          python3 -m pip install tox
+          curl -sSL https://install.python-poetry.org | python3 -
+	        which poetry
+	        poetry --version
       - name: Run tests
         run: tox -e unit
