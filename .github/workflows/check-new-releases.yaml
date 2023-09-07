@@ -105,7 +105,7 @@ jobs:
       - name: Check if products needed to be released
         id: check-release
         run: |
-          python3 uploader/services.py \
+          python3 -m uploader.services \
             check-releases \
             --output-directory ${{ env.OUTPUT_DIR }} \
             --tarball-pattern ${{ inputs.tarball-regex }} \
