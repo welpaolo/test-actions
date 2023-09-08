@@ -100,9 +100,9 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
 
 def main(args: Namespace):
     if args.action == Actions.VERSION:
-        if is_valid_product_name(args.name):
-            print(get_version_from_tarball_name(args.name))
-        raise ValueError("Invalid product name!")
+        if not is_valid_product_name(args.name):
+            raise ValueError("Invalid product name!")
+        print(get_version_from_tarball_name(args.name))
 
     elif args.action == Actions.VALID_NAME:
         if not is_valid_product_name(args.name):
