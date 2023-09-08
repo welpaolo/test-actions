@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
-from argparse import Namespace
-from dataclasses import dataclass
-from urllib.error import URLError
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
 
-from launchpadlib.launchpad import Launchpad
-from typing import Any, Dict, List
-from urllib.parse import unquote
+
 import argparse
 import collections
-import httplib2
+import logging
 import os
 import urllib.request
-import logging
+from argparse import Namespace
+from dataclasses import dataclass
+from typing import Any, Dict, List
+from urllib.error import URLError
+from urllib.parse import unquote
 
+import httplib2
+from launchpadlib.launchpad import Launchpad
 
 LP_APP = "data-platform-java-build-app"
 LP_SERVER = "production"
 LP_VERSION = "devel"
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class CIBuild:
@@ -79,16 +83,17 @@ def parse_args() -> Namespace:
 def get_launchpad(credential_file: str) -> Launchpad:
     """Get launchpad handler."""
     return Launchpad.login_with(
-        LP_APP, LP_SERVER, credentials_file=credential_file, version=LP_VERSION, timeout=30
+        LP_APP,
+        LP_SERVER,
+        credentials_file=credential_file,
+        version=LP_VERSION,
+        timeout=30,
     )
 
 
-def _get_version_urls():
-    """This function returns for each version the files that needed to be downloaded."""
-    pass
-
-
-def get_branches_in_repo(lp: Launchpad, repo_url: str, branch_prefix: str) -> Dict[str, List[Any]]:
+def get_branches_in_repo(
+    lp: Launchpad, repo_url: str, branch_prefix: str
+) -> Dict[str, List[Any]]:
     """Fetch branches from repo."""
     # get repository
     repo = lp.git_repositories.getByPath(path=repo_url)
@@ -145,10 +150,7 @@ def get_build_runs_by_branch(branches: Dict[str, List[Any]]):
 
 
 def download_build_artifacts_by_branch(
-    launchpad: Launchpad,
-    branch: str,
-    build_run,
-    output_folder: str
+    launchpad: Launchpad, branch: str, build_run, output_folder: str
 ) -> None:
     """Download build artifacts of a build run."""
     output_directory = f"{output_folder}/{str(branch).split('/')[-1]}"
@@ -157,7 +159,7 @@ def download_build_artifacts_by_branch(
     for url_file in build_run.artifact_urls:
         url = _get_tokenized_librarian_url(launchpad, url_file)
         # download each file related to the build
-        file_name = unquote(str(url_file).split('/')[-1])
+        file_name = unquote(str(url_file).split("/")[-1])
         try:
             urllib.request.urlretrieve(url, f"{output_directory}/{file_name}")
         except URLError as e:
@@ -174,7 +176,9 @@ def main():
     # fetch repositories
     branches = get_branches_in_repo(launchpad, args.repository_url, args.branch_prefix)
     if not branches:
-        raise ValueError("No items to download please checks the repository or branch prefix")
+        raise ValueError(
+            "No items to download please checks the repository or branch prefix"
+        )
 
     # fetch list of builds by branch
     branch_builds = get_build_runs_by_branch(branches)
@@ -185,7 +189,9 @@ def main():
             continue
 
         last_run = sorted(runs, key=lambda x: x.date_built, reverse=True)[0]
-        download_build_artifacts_by_branch(launchpad, branch, last_run, args.output_folder)
+        download_build_artifacts_by_branch(
+            launchpad, branch, last_run, args.output_folder
+        )
 
 
 if __name__ == "__main__":
