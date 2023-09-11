@@ -175,6 +175,7 @@ jobs:
             exit 1
           fi
           tarball_filename=$(ls ${{ inputs.tarball-regex }})
+          echo "TARBALL FILENAME: $tarball_filename"
           echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_OUTPUT
           version=$( python3 ../../uploader/services.py get-version -n $tarball_filename )
           track=$(echo "${{ inputs.lp-building-branch-prefix }}" | awk -F '-' '{print $NF}')
@@ -184,7 +185,7 @@ jobs:
           echo "Tarball filename: $tarball_filename"
           echo "Software version: $version"
           echo "Track: $track"
-      
+
       - name: Create credentials file for Launchpad
         env:
           CONSUMER_KEY: ${{ secrets[inputs.lp-consumer-key] }}
@@ -213,7 +214,7 @@ jobs:
             --version "${{ steps.get-tarball-name.outputs.VERSION }}" \
             --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}" \
             --credentials ${{ env.LP_CREDENTIALS }}
-      
+
       - name: Release the package on Github
         id: create-new-release
         uses: actions/create-release@v1
