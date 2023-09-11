@@ -5,7 +5,7 @@ import logging
 from argparse import ArgumentParser, Namespace
 from enum import Enum
 
-from utils import (
+from uploader.utils import (
     check_new_releases,
     get_version_from_tarball_name,
     is_valid_product_name,
